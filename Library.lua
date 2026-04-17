@@ -1193,8 +1193,9 @@ end
 
 local ScreenGui = New("ScreenGui", {
     Name = "Obsidian",
-    DisplayOrder = 998,
+    DisplayOrder = 999,
     ResetOnSpawn = false,
+    ZindexBehavior = Enum.ZIndexBehavior.Global,
 })
 ParentUI(ScreenGui, true)
 Library.ScreenGui = ScreenGui
