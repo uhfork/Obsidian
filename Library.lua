@@ -1521,7 +1521,7 @@ function Library:AddOutline(Frame: GuiObject)
     })
     local ShadowStroke = New("UIStroke", {
         Color = "DarkColor",
-        Thickness = 1.5,
+        Thickness = 2,
         ZIndex = 1,
         Parent = Frame,
     })
@@ -4897,6 +4897,149 @@ do
             return Dropdown.Value and 1 or 0
         end
 
+        function Dropdown:AddButton(...)
+            local function GetInfo(...)
+                local Info = {}
+
+                local First = select(1, ...)
+                local Second = select(2, ...)
+
+                if typeof(First) == "table" or typeof(Second) == "table" then
+                local Params = typeof(First) == "table" and First or Second
+
+                Info.Text = Params.Text or ""
+                Info.Func = Params.Func or Params.Callback or function() end
+
+                Info.Idx = typeof(Second) == "table" and First or nil
+                else
+                Info.Text = First or ""
+                Info.Func = Second or function() end
+
+                Info.Idx = select(4, ...) or nil
+                end
+
+                return Info
+            end
+            local Info = GetInfo(...)
+            
+            local Button = {
+                Text = Info.Text,
+                Func = function()
+                    Library:SafeCallback(Info.Func)
+                        
+                    Dropdown:Display()
+
+                    for _, Button in Buttons do
+                        Button:UpdateButton()
+                    end
+
+                    Library:UpdateDependencyBoxes()
+                    Library:SafeCallback(Dropdown.Callback, Dropdown.Value)
+                    Library:SafeCallback(Dropdown.Changed, Dropdown.Value)
+                end,
+
+                Tween = nil,
+                Type = "Button",
+            }
+
+            local Holder = New("Frame", {
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, -2, 0, 21),
+                Parent = MenuTable.Menu,
+            })
+            New("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                HorizontalFlex = Enum.UIFlexAlignment.Fill,
+                Padding = UDim.new(0, 6),
+                Parent = Holder,
+            })
+            New("UIPadding", {
+                PaddingLeft = UDim.new(0, 4),
+                PaddingRight = UDim.new(0, 4),
+                Parent = Holder,
+            })
+
+            local function CreateButton(Button)
+                local Base = New("TextButton", {
+                    BackgroundColor3 = "MainColor",
+                    Size = UDim2.fromScale(1, 1),
+                    Text = Button.Text,
+                    TextSize = 14,
+                    TextTransparency = 0.4,
+                    Visible = true,
+                    Parent = Holder,
+                })
+
+                New("UIStroke", {
+                    Color = "OutlineColor",
+                    Transparency = 0,
+                    Parent = Base,
+                })
+
+                table.insert(
+                    Library.Corners,
+                    New("UICorner", {
+                CornerRadius = UDim.new(0, Library.CornerRadius / 2),
+                Parent = Base,
+                    })
+                )
+
+                return Base
+            end
+
+            local function InitEvents(Button)
+                Button.Base.MouseEnter:Connect(function()
+                    Button.Tween = TweenService:Create(Button.Base, Library.TweenInfo, {
+                        TextTransparency = 0,
+                    })
+                    Button.Tween:Play()
+                end)
+                Button.Base.MouseLeave:Connect(function()
+                    Button.Tween = TweenService:Create(Button.Base, Library.TweenInfo, {
+                        TextTransparency = 0.4,
+                    })
+                    Button.Tween:Play()
+                end)
+
+                Button.Base.MouseButton1Click:Connect(function()
+                    Library:SafeCallback(Button.Func)
+                end)
+            end
+
+            Button.Base = CreateButton(Button)
+            InitEvents(Button)
+
+            function Button:AddButton(...)
+                local Info = GetInfo(...)
+
+                local SubButton = {
+                    Text = Info.Text,
+                    Func = function()
+                        Library:SafeCallback(Info.Func)
+
+                        Dropdown:Display()
+
+                        for _, OtherButton in Buttons do
+                            OtherButton:UpdateButton()
+                        end
+
+                        Library:UpdateDependencyBoxes()
+                        Library:SafeCallback(Dropdown.Callback, Dropdown.Value)
+                        Library:SafeCallback(Dropdown.Changed, Dropdown.Value)
+                    end,
+
+                    Tween = nil,
+                    Type = "SubButton",
+                }
+
+                Button.SubButton = SubButton
+                SubButton.Base = CreateButton(SubButton)
+                InitEvents(SubButton)
+                return SubButton
+            end
+            return Button
+        end
+
         local Buttons = {}
         function Dropdown:BuildDropdownList()
             local Values = Dropdown.Values
@@ -4908,6 +5051,43 @@ do
             table.clear(Buttons)
 
             local Count = 0
+            
+            if Info.Multi then
+                local SelectButton = self:AddButton("Select All", function()
+                    local Selected = {}
+
+                    for _, Value in Values do
+                        if not table.find(DisabledValues, v) then
+                            Selected[Value] = true
+                        end
+                    end
+
+                    Dropdown:SetValue(Selected)
+                end)
+                SelectButton:AddButton("Deselect All", function()
+                    Dropdown:SetValue()
+                end)
+            end
+
+            MenuTable.Menu.UIListLayout.Padding = UDim.new(0, Info.Multi and 4 or 0)
+            New("UIPadding", {
+                PaddingTop = UDim.new(0, 4),
+                Parent = MenuTable.Menu,
+            })
+
+            local ButtonHolder = New("Frame", {
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1,
+                LayoutOrder = Info.Multi and 1 or 0,
+                Size = UDim2.fromScale(1, 1),
+                Parent = MenuTable.Menu,
+            })
+            New("UIListLayout", {
+                Padding = UDim.new(0, 0),
+                Parent = ButtonHolder,
+            })
+            
+
             for _, Value in Values do
                 local FormattedValue = tostring(Info.FormatListValue and Info.FormatListValue(Value) or Value)
                 if SearchBox and not FormattedValue:lower():match(SearchBox.Text:lower()) then
@@ -4928,7 +5108,7 @@ do
                     TextSize = 14,
                     TextTransparency = 0.5,
                     TextXAlignment = Enum.TextXAlignment.Left,
-                    Parent = MenuTable.Menu,
+                    Parent = ButtonHolder,
                 })
                 New("UIPadding", {
                     PaddingLeft = UDim.new(0, 7),
@@ -7400,16 +7580,14 @@ function Library:CreateWindow(WindowInfo)
                         )
                     end
 
+                    GroupboxLine.BackgroundTransparency = self.Collapsed and 1 or 0
+
                     if Animate then
                         TweenService:Create(GroupboxHolder, Library.TweenInfo, {
                             Size = GroupboxSize
                         }):Play()
-                        TweenService:Create(GroupboxLine, Library.TweenInfo, {
-                            BackgroundTransparency = self.Collapsed and 1 or 0
-                        }):Play()
                     else
                         GroupboxHolder.Size = GroupboxSize
-                        GroupboxLine.BackgroundTransparency = self.Collapsed and 1 or 0
                     end
                 end
 
