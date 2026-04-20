@@ -7102,13 +7102,10 @@ function Library:CreateWindow(WindowInfo)
                 PaddingTop = UDim.new(0, IsCompact and 8 or 10),
                 Parent = TabButton,
             })
-            table.insert(
-                Library.Corners,
-                New("UICorner", {
-                    CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
-                    Parent = TabButton,
-                })
-            )
+            New("UICorner", {
+                CornerRadius = UDim.new(0, 4),
+                Parent = TabButton,
+            })
 
             TabLabel = New("TextLabel", {
                 BackgroundTransparency = 1,
@@ -7129,6 +7126,10 @@ function Library:CreateWindow(WindowInfo)
                 Position = UDim2.fromOffset(-11, 0),
                 Size = UDim2.new(0, 2, 1, 0),
                 Parent = TabButton,
+            })
+            New("UICorner", {
+                CornerRadius = UDim.new(1, 0),
+                Parent = TabDecoration,
             })
 
             if Icon then
@@ -7943,6 +7944,8 @@ function Library:CreateWindow(WindowInfo)
 
             if Description then
                 Window:ShowTabInfo(Name, Description)
+            else
+                Window:ShowTabInfo(Name, "No description provided.")
             end
 
             TabContainer.Visible = true
@@ -7988,14 +7991,14 @@ function Library:CreateWindow(WindowInfo)
         --// Execution \\--
         if not Library.ActiveTab then
             Tab:Show()
-
-            if IsCompact then
-                Library:AddTooltip(Name, nil, TabButton)
-            end
         end
 
         TabButton.MouseEnter:Connect(function()
             Tab:Hover(true)
+            
+            if IsCompact then
+                Library:AddTooltip(Name, nil, TabButton)
+            end
         end)
         TabButton.MouseLeave:Connect(function()
             Tab:Hover(false)
@@ -8041,10 +8044,10 @@ function Library:CreateWindow(WindowInfo)
                 Parent = Tabs,
             })
             local ButtonPadding = New("UIPadding", {
-                PaddingBottom = UDim.new(0, IsCompact and 6 or 11),
-                PaddingLeft = UDim.new(0, IsCompact and 6 or 12),
-                PaddingRight = UDim.new(0, IsCompact and 6 or 12),
-                PaddingTop = UDim.new(0, IsCompact and 6 or 11),
+                PaddingBottom = UDim.new(0, IsCompact and 8 or 10),
+                PaddingLeft = UDim.new(0, IsCompact and 8 or 10),
+                PaddingRight = UDim.new(0, IsCompact and 8 or 10),
+                PaddingTop = UDim.new(0, IsCompact and 8 or 10),
                 Parent = TabButton,
             })
 
@@ -8216,6 +8219,8 @@ function Library:CreateWindow(WindowInfo)
 
             if Description then
                 Window:ShowTabInfo(Name, Description)
+            else
+                Window:ShowTabInfo(Name, "No description provided.")
             end
 
             Tab:RefreshSides()
