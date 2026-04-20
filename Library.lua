@@ -329,6 +329,7 @@ local Templates = {
 
         ShowMobileButtons = true,
         MobileButtonsSide = "Left",
+        IconButtons = true,
 
         UnlockMouseWhileOpen = true,
 
@@ -1663,6 +1664,70 @@ function Library:AddDraggableButton(Text: string, Func, ExcludeScaling: boolean?
         Button.Size = UDim2.fromOffset(X * 2, Y * 2)
     end
     Table:SetText(Text)
+
+    return Table
+end
+
+function Library:AddDraggableIconButton(Icon: number | string, Func, ExcludeScaling: boolean?)
+    local Table = {}
+
+    local Button = New("TextButton", {
+        BackgroundColor3 = "BackgroundColor",
+        Position = UDim2.fromOffset(6, 6),
+        Size = UDim2.fromOffset(16, 16),
+        Text = ""
+        TextSize = 16,
+        ZIndex = 10,
+        Parent = ScreenGui,
+    })
+    table.insert(
+        Library.Corners, 
+        New("UICorner", {
+            CornerRadius = UDim.new(0, Library.CornerRadius),
+            Parent = Button,
+        })
+    )
+    if not ExcludeScaling then
+        table.insert(
+            Library.Scales,
+            New("UIScale", {
+                Parent = Button,
+            })
+        )
+    end
+    Library:AddOutline(Button)
+
+    local ButtonImage = New("ImageLabel", {
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(2, 2)
+        Size = UDim2.new(1, -4, 1, -4)
+        ZIndex = 11,
+        Parent = Button
+    })
+    table.insert(
+        Library.Corners, 
+        New("UICorner", {
+            CornerRadius = UDim.new(0, Library.CornerRadius / 2),
+            Parent = ButtonImage,
+        })
+    )
+
+    Button.MouseButton1Click:Connect(function()
+        Library:SafeCallback(Func, Table)
+    end)
+    Library:MakeDraggable(Button, Button, true)
+
+    Table.Button = Button
+
+    function Table:SetIcon(Image: number | string)
+        local Icon = Library:GetCustomIcon(ImageProperties.Image)
+        assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
+
+        ButtonImage.Image = Icon.Url
+        ButtonImage.ImageRectOffset = Icon.ImageRectOffset
+        ButtonImage.ImageRectSize = Icon.ImageRectSize
+    end
+    Table:SetIcon(Icon)
 
     return Table
 end
@@ -8898,14 +8963,29 @@ function Library:CreateWindow(WindowInfo)
     end
 
     if Library.IsMobile then
-        local ToggleButton = Library:AddDraggableButton("Toggle", function()
-            Library:Toggle()
-        end, true)
+        local ToggleButton
+        local LockButton
 
-        local LockButton = Library:AddDraggableButton("Lock", function(self)
-            Library.CantDragForced = not Library.CantDragForced
-            self:SetText(Library.CantDragForced and "Unlock" or "Lock")
-        end, true)
+        if WindowInfo.IconButtons then
+            ToggleButton = Library:AddDraggableIconButton("Toggle", function(self)
+                Library:Toggle()
+                self:SetIcon(Library.Toggled and "eye" or "eye-off")
+            end, true)
+
+            LockButton = Library:AddDraggableIconButton("lock", function(self)
+                Library.CantDragForced = not Library.CantDragForced
+                self:SetIcon(Library.CantDragForced and "lock-open" or "lock")
+            end, true)
+        else
+            ToggleButton = Library:AddDraggableButton("Toggle", function()
+                Library:Toggle()
+            end, true)
+
+            LockButton = Library:AddDraggableButton("Lock", function(self)
+                Library.CantDragForced = not Library.CantDragForced
+                self:SetText(Library.CantDragForced and "Unlock" or "Lock")
+            end, true)
+        end
 
         if WindowInfo.MobileButtonsSide == "Right" then
             ToggleButton.Button.Position = UDim2.new(1, -6, 0, 6)
