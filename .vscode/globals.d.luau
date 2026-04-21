@@ -1,5 +1,3 @@
-declare function game:HttpGet(url: string, nocache: boolean?): string
-
 declare function getgenv(): { [string]: any }
 
 declare function clonereference(object: Instance): Instance
