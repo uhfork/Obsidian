@@ -1667,14 +1667,14 @@ function Library:AddDraggableButton(Text: string, Func, ExcludeScaling: boolean?
     return Table
 end
 
-function Library:AddDraggableIconButton(Icon: number | string, Func, ExcludeScaling: boolean?)
+function Library:AddDraggableIconButton(Icon: string, Func, ExcludeScaling: boolean?)
     local Table = {}
 
     local Button = New("TextButton", {
         BackgroundColor3 = "BackgroundColor",
         Position = UDim2.fromOffset(6, 6),
         Size = UDim2.fromOffset(16, 16),
-        Text = ""
+        Text = "",
         TextSize = 16,
         ZIndex = 10,
         Parent = ScreenGui,
@@ -1698,8 +1698,8 @@ function Library:AddDraggableIconButton(Icon: number | string, Func, ExcludeScal
 
     local ButtonImage = New("ImageLabel", {
         BackgroundTransparency = 1,
-        Position = UDim2.fromOffset(2, 2)
-        Size = UDim2.new(1, -4, 1, -4)
+        Position = UDim2.fromOffset(2, 2),
+        Size = UDim2.new(1, -4, 1, -4),
         ZIndex = 11,
         Parent = Button
     })
@@ -1718,7 +1718,7 @@ function Library:AddDraggableIconButton(Icon: number | string, Func, ExcludeScal
 
     Table.Button = Button
 
-    function Table:SetIcon(Image: number | string)
+    function Table:SetIcon(Image: string)
         local Icon = Library:GetCustomIcon(Image)
         assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
 
@@ -6607,6 +6607,7 @@ function Library:CreateWindow(WindowInfo)
 
     local IsDefaultSearchbarSize = WindowInfo.SearchbarSize == UDim2.fromScale(1, 1)
     local MainFrame
+    local Glow
     local DividerLine
     local TitleHolder
     local WindowTitle
@@ -8061,7 +8062,7 @@ function Library:CreateWindow(WindowInfo)
             Tab:Hover(true)
             
             if IsCompact then
-                Library:AddTooltip(Name, nil, TabButton)
+                Library:AddTooltip(Name, "", TabButton)
             end
         end)
         TabButton.MouseLeave:Connect(function()
