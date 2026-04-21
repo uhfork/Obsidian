@@ -1673,7 +1673,7 @@ function Library:AddDraggableIconButton(Icon: string, Func, ExcludeScaling: bool
     local Button = New("TextButton", {
         BackgroundColor3 = "BackgroundColor",
         Position = UDim2.fromOffset(6, 6),
-        Size = UDim2.fromOffset(16, 16),
+        Size = UDim2.fromOffset(32, 32),
         Text = "",
         TextSize = 16,
         ZIndex = 10,
