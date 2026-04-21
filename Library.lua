@@ -1719,7 +1719,7 @@ function Library:AddDraggableIconButton(Icon: number | string, Func, ExcludeScal
     Table.Button = Button
 
     function Table:SetIcon(Image: number | string)
-        local Icon = Library:GetCustomIcon(ImageProperties.Image)
+        local Icon = Library:GetCustomIcon(Image)
         assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
 
         ButtonImage.Image = Icon.Url
