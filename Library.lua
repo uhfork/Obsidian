@@ -329,7 +329,6 @@ local Templates = {
 
         ShowMobileButtons = true,
         MobileButtonsSide = "Left",
-        IconButtons = true,
 
         UnlockMouseWhileOpen = true,
 
@@ -8963,29 +8962,18 @@ function Library:CreateWindow(WindowInfo)
     end
 
     if Library.IsMobile then
+        -- Soon™
         local ToggleButton
         local LockButton
 
-        if WindowInfo.IconButtons then
-            ToggleButton = Library:AddDraggableIconButton("Toggle", function(self)
-                Library:Toggle()
-                self:SetIcon(Library.Toggled and "eye" or "eye-off")
-            end, true)
+        ToggleButton = Library:AddDraggableButton("Toggle", function()
+            Library:Toggle()
+        end, true)
 
-            LockButton = Library:AddDraggableIconButton("lock", function(self)
-                Library.CantDragForced = not Library.CantDragForced
-                self:SetIcon(Library.CantDragForced and "lock-open" or "lock")
-            end, true)
-        else
-            ToggleButton = Library:AddDraggableButton("Toggle", function()
-                Library:Toggle()
-            end, true)
-
-            LockButton = Library:AddDraggableButton("Lock", function(self)
-                Library.CantDragForced = not Library.CantDragForced
-                self:SetText(Library.CantDragForced and "Unlock" or "Lock")
-            end, true)
-        end
+        LockButton = Library:AddDraggableButton("Lock", function(self)
+            Library.CantDragForced = not Library.CantDragForced
+            self:SetText(Library.CantDragForced and "Unlock" or "Lock")
+        end, true)
 
         if WindowInfo.MobileButtonsSide == "Right" then
             ToggleButton.Button.Position = UDim2.new(1, -6, 0, 6)
