@@ -1667,6 +1667,70 @@ function Library:AddDraggableButton(Text: string, Func, ExcludeScaling: boolean?
     return Table
 end
 
+function Library:AddDraggableIconButton(Icon: number | string, Func, ExcludeScaling: boolean?)
+    local Table = {}
+
+    local Button = New("TextButton", {
+        BackgroundColor3 = "BackgroundColor",
+        Position = UDim2.fromOffset(6, 6),
+        Size = UDim2.fromOffset(16, 16),
+        Text = ""
+        TextSize = 16,
+        ZIndex = 10,
+        Parent = ScreenGui,
+    })
+    table.insert(
+        Library.Corners, 
+        New("UICorner", {
+            CornerRadius = UDim.new(0, Library.CornerRadius),
+            Parent = Button,
+        })
+    )
+    if not ExcludeScaling then
+        table.insert(
+            Library.Scales,
+            New("UIScale", {
+                Parent = Button,
+            })
+        )
+    end
+    Library:AddOutline(Button)
+
+    local ButtonImage = New("ImageLabel", {
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(2, 2)
+        Size = UDim2.new(1, -4, 1, -4)
+        ZIndex = 11,
+        Parent = Button
+    })
+    table.insert(
+        Library.Corners, 
+        New("UICorner", {
+            CornerRadius = UDim.new(0, Library.CornerRadius / 2),
+            Parent = ButtonImage,
+        })
+    )
+
+    Button.MouseButton1Click:Connect(function()
+        Library:SafeCallback(Func, Table)
+    end)
+    Library:MakeDraggable(Button, Button, true)
+
+    Table.Button = Button
+
+    function Table:SetIcon(Image: number | string)
+        local Icon = Library:GetCustomIcon(ImageProperties.Image)
+        assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
+
+        ButtonImage.Image = Icon.Url
+        ButtonImage.ImageRectOffset = Icon.ImageRectOffset
+        ButtonImage.ImageRectSize = Icon.ImageRectSize
+    end
+    Table:SetIcon(Icon)
+
+    return Table
+end
+
 function Library:AddDraggableMenu(Name: string)
     local Holder = New("Frame", {
         AutomaticSize = Enum.AutomaticSize.XY,
