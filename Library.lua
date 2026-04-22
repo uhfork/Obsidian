@@ -319,6 +319,7 @@ local Templates = {
         AutoShow = true,
         Center = true,
         Resizable = true,
+        Glow = true,
         SearchbarSize = UDim2.fromScale(1, 1),
         GlobalSearch = false,
         CornerRadius = 4,
@@ -2161,6 +2162,7 @@ local ArrowIcon = Library:GetIcon("chevron-up")
 local ResizeIcon = Library:GetIcon("move-diagonal-2")
 local KeyIcon = Library:GetIcon("key")
 local MoveIcon = Library:GetIcon("move")
+local FileQuestionMarkIcon = Library:GetIcon("file-question-mark")
 
 function Library:SetIconModule(module: IconModule)
     FetchIcons = true
@@ -2172,6 +2174,7 @@ function Library:SetIconModule(module: IconModule)
     ResizeIcon = Library:GetIcon("move-diagonal-2")
     KeyIcon = Library:GetIcon("key")
     MoveIcon = Library:GetIcon("move")
+    FileQuestionMarkIcon = Library:GetIcon("file-question-mark")
 end
 
 local BaseAddons = {}
@@ -6664,17 +6667,19 @@ function Library:CreateWindow(WindowInfo)
             Size = UDim2.new(1, 0, 0, 1),
         })
 
-        Glow = New("ImageLabel", {
-            BackgroundTransparency = 1,
-            Position = UDim2.fromOffset(-20, -20),
-            Size = UDim2.new(1, 40, 1, 40),
-            ZIndex = -1,
-            Image = CustomImageManager.GetAsset("Glow"),
-            ImageColor3 = function()
-                return Library:GetBetterColor(Library.Scheme.AccentColor, -1)
-            end,
-            Parent = MainFrame,
-        })
+        if WindowInfo.Glow then
+            Glow = New("ImageLabel", {
+                BackgroundTransparency = 1,
+                Position = UDim2.fromOffset(-20, -20),
+                Size = UDim2.new(1, 40, 1, 40),
+                ZIndex = -1,
+                Image = CustomImageManager.GetAsset("Glow"),
+                ImageColor3 = function()
+                    return Library:GetBetterColor(Library.Scheme.AccentColor, -1)
+                end,
+                Parent = MainFrame,
+            })
+        end
 
         DividerLine = New("Frame", {
             BackgroundColor3 = "OutlineColor",
@@ -7135,12 +7140,14 @@ function Library:CreateWindow(WindowInfo)
             local Info = select(1, ...)
             Name = Info.Name or "Tab"
             Icon = Info.Icon
-            Description = Info.Description
+            Description = Info.Description or "Description"
         else
-            Name = select(1, ...)
+            Name = select(1, ...) or "Tab"
             Icon = select(2, ...)
-            Description = select(3, ...)
+            Description = select(3, ...) or "Description"
         end
+
+        Icon = Icon or "file-question-mark"
 
         local TabButton: TextButton
         local TabLabel
@@ -7151,7 +7158,7 @@ function Library:CreateWindow(WindowInfo)
         local TabLeft
         local TabRight
 
-        Icon = Library:GetCustomIcon(Icon)
+        Icon = if Icon == "file-question-mark" then FileQuestionMarkIcon else Library:GetCustomIcon(Icon)
         do
             TabButton = New("TextButton", {
                 BackgroundColor3 = "AccentColor",
@@ -8007,11 +8014,7 @@ function Library:CreateWindow(WindowInfo)
                 }):Play()
             end
 
-            if Description then
-                Window:ShowTabInfo(Name, Description)
-            else
-                Window:ShowTabInfo(Name, "No description provided.")
-            end
+            Window:ShowTabInfo(Name, Description)
 
             TabContainer.Visible = true
             Tab:RefreshSides()
@@ -8084,11 +8087,11 @@ function Library:CreateWindow(WindowInfo)
             local Info = select(1, ...)
             Name = Info.Name or "Tab"
             Icon = Info.Icon
-            Description = Info.Description
+            Description = Info.Description or "Description"
         else
             Name = select(1, ...) or "Tab"
             Icon = select(2, ...)
-            Description = select(3, ...)
+            Description = select(3, ...) or "Description"
         end
 
         Icon = Icon or "key"
@@ -8282,11 +8285,7 @@ function Library:CreateWindow(WindowInfo)
             end
             TabContainer.Visible = true
 
-            if Description then
-                Window:ShowTabInfo(Name, Description)
-            else
-                Window:ShowTabInfo(Name, "No description provided.")
-            end
+            Window:ShowTabInfo(Name, Description)
 
             Tab:RefreshSides()
 
