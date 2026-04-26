@@ -349,7 +349,7 @@ local Templates = {
     },
     Dialog = {
         Title = "Dialog",
-        Description = "Description",
+        Description = "No Description",
         AutoDismiss = true,
         OutsideClickDismiss = true,
         FooterButtons = {}
@@ -6782,20 +6782,14 @@ function Library:CreateWindow(WindowInfo)
             FillDirection = Enum.FillDirection.Horizontal,
             HorizontalAlignment = Enum.HorizontalAlignment.Left,
             VerticalAlignment = Enum.VerticalAlignment.Center,
-            Padding = UDim.new(0, 8),
             Parent = RightWrapper,
         })
 
         CurrentTabInfo = New("Frame", {
-            Size = UDim2.fromScale(WindowInfo.DisableSearch and 1 or 0.5, 1),
+            Size = UDim2.fromScale(WindowInfo.DisableSearch and 1 or 0.65, 1),
             Visible = false,
             BackgroundTransparency = 1,
             Parent = RightWrapper,
-        })
-
-        New("UIFlexItem", {
-            FlexMode = Enum.UIFlexMode.Grow,
-            Parent = CurrentTabInfo,
         })
 
         New("UIListLayout", {
@@ -6807,7 +6801,7 @@ function Library:CreateWindow(WindowInfo)
 
         New("UIPadding", {
             PaddingBottom = UDim.new(0, 8),
-            PaddingLeft = UDim.new(0, 8),
+            PaddingLeft = UDim.new(0, 6),
             PaddingRight = UDim.new(0, 8),
             PaddingTop = UDim.new(0, 8),
             Parent = CurrentTabInfo,
@@ -6836,15 +6830,12 @@ function Library:CreateWindow(WindowInfo)
 
         SearchBox = New("TextBox", {
             BackgroundColor3 = "MainColor",
-            PlaceholderText = "Search",
             Size = WindowInfo.SearchbarSize,
-            TextScaled = true,
+            PlaceholderText = "Search..",
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
             Visible = not (WindowInfo.DisableSearch or false),
             Parent = RightWrapper,
-        })
-        New("UIFlexItem", {
-            FlexMode = Enum.UIFlexMode.Shrink,
-            Parent = SearchBox,
         })
         table.insert(
             Library.Corners,
@@ -6855,7 +6846,7 @@ function Library:CreateWindow(WindowInfo)
         )
         New("UIPadding", {
             PaddingBottom = UDim.new(0, 8),
-            PaddingLeft = UDim.new(0, 8),
+            PaddingLeft = UDim.new(0, 28),
             PaddingRight = UDim.new(0, 8),
             PaddingTop = UDim.new(0, 8),
             Parent = SearchBox,
@@ -6868,6 +6859,7 @@ function Library:CreateWindow(WindowInfo)
         local SearchIcon = Library:GetIcon("search")
         if SearchIcon then
             New("ImageLabel", {
+                Position = UDim2.fromOffset(-22, 0),
                 Image = SearchIcon.Url,
                 ImageColor3 = "FontColor",
                 ImageRectOffset = SearchIcon.ImageRectOffset,
@@ -7077,10 +7069,10 @@ function Library:CreateWindow(WindowInfo)
             end
 
             Button.Label.Visible = not IsCompact
-            Button.Padding.PaddingBottom = UDim.new(0, IsCompact and 6 or 11)
-            Button.Padding.PaddingLeft = UDim.new(0, IsCompact and 6 or 12)
-            Button.Padding.PaddingRight = UDim.new(0, IsCompact and 6 or 12)
-            Button.Padding.PaddingTop = UDim.new(0, IsCompact and 6 or 11)
+            Button.Padding.PaddingBottom = UDim.new(0, IsCompact and 8 or 10)
+            Button.Padding.PaddingLeft = UDim.new(0, IsCompact and 8 or 10)
+            Button.Padding.PaddingRight = UDim.new(0, IsCompact and 8 or 10)
+            Button.Padding.PaddingTop = UDim.new(0, IsCompact and 8 or 10)
             Button.Icon.SizeConstraint = IsCompact and Enum.SizeConstraint.RelativeXY or Enum.SizeConstraint.RelativeYY
         end
     end
@@ -7116,11 +7108,11 @@ function Library:CreateWindow(WindowInfo)
     end
 
     function Window:ShowTabInfo(Name, Description)
-        CurrentTabLabel.Text = `<b>{Name}</b>`
-        CurrentTabDescription.Text = Description
+        CurrentTabLabel.Text = `<b>{Name or "Name"}</b>`
+        CurrentTabDescription.Text = Description or "Description"
 
         if IsDefaultSearchbarSize then
-            SearchBox.Size = UDim2.fromScale(0.5, 1)
+            SearchBox.Size = UDim2.fromScale(0.35, 1)
         end
         CurrentTabInfo.Visible = true
     end
@@ -7140,11 +7132,11 @@ function Library:CreateWindow(WindowInfo)
             local Info = select(1, ...)
             Name = Info.Name or "Tab"
             Icon = Info.Icon
-            Description = Info.Description or "Description"
+            Description = Info.Description or "No Description"
         else
             Name = select(1, ...) or "Tab"
             Icon = select(2, ...)
-            Description = select(3, ...) or "Description"
+            Description = select(3, ...) or "No Description"
         end
 
         Icon = Icon or "file-question-mark"
@@ -8087,11 +8079,11 @@ function Library:CreateWindow(WindowInfo)
             local Info = select(1, ...)
             Name = Info.Name or "Tab"
             Icon = Info.Icon
-            Description = Info.Description or "Description"
+            Description = Info.Description or "No Description"
         else
             Name = select(1, ...) or "Tab"
             Icon = select(2, ...)
-            Description = select(3, ...) or "Description"
+            Description = select(3, ...) or "No Description"
         end
 
         Icon = Icon or "key"
