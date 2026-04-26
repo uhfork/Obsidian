@@ -5127,7 +5127,7 @@ do
                     local Selected = {}
 
                     for _, Value in Values do
-                        if not table.find(DisabledValues, v) then
+                        if not table.find(DisabledValues, Value) then
                             Selected[Value] = true
                         end
                     end
@@ -7774,7 +7774,6 @@ function Library:CreateWindow(WindowInfo)
                 )
 
                 local BottomCover = New("Frame", {
-                    Name = "BottomCover",
                     BackgroundColor3 = "MainColor",
                     BorderSizePixel = 0,
                     Position = UDim2.new(0, 0, 1, -WindowInfo.CornerRadius),
@@ -7783,7 +7782,6 @@ function Library:CreateWindow(WindowInfo)
                 })
 
                 local LeftCover = New("Frame", {
-                    Name = "LeftCover",
                     BackgroundColor3 = "MainColor",
                     BorderSizePixel = 0,
                     Position = UDim2.new(0, 0, 0, 0),
@@ -7793,7 +7791,6 @@ function Library:CreateWindow(WindowInfo)
                 })
 
                 local RightCover = New("Frame", {
-                    Name = "RightCover",
                     AnchorPoint = Vector2.new(1, 0),
                     BackgroundColor3 = "MainColor",
                     BorderSizePixel = 0,
@@ -7823,24 +7820,27 @@ function Library:CreateWindow(WindowInfo)
                 if BoxIcon then
                     ButtonIcon = New("ImageLabel", {
                         Image = BoxIcon.Url,
-                        ImageColor3 = BoxIcon.Custom and "WhiteColor" or "AccentColor",
+                        ImageColor3 = "WhiteColor",
                         ImageRectOffset = BoxIcon.ImageRectOffset,
                         ImageRectSize = BoxIcon.ImageRectSize,
                         ImageTransparency = 0.5,
-                        Size = UDim2.fromOffset(16, 16),
+                        Size = (Name and Name ~= "") and UDim2.fromOffset(18, 18) or UDim2.fromOffset(22, 22),
                         Parent = ButtonContent,
                     })
                 end
 
-                local ButtonLabel = New("TextLabel", {
-                    AutomaticSize = Enum.AutomaticSize.X,
-                    BackgroundTransparency = 1,
-                    Size = UDim2.fromOffset(0, 16),
-                    Text = Name,
-                    TextSize = 15,
-                    TextTransparency = 0.5,
-                    Parent = ButtonContent,
-                })
+                local ButtonLabel
+                if Name and Name ~= "" then
+                    ButtonLabel = New("TextLabel", {
+                        AutomaticSize = Enum.AutomaticSize.X,
+                        BackgroundTransparency = 1,
+                        Size = UDim2.fromOffset(0, 16),
+                        Text = Name,
+                        TextSize = 15,
+                        TextTransparency = 0.5,
+                        Parent = ButtonContent,
+                    })
+                end
 
                 local Line = Library:MakeLine(Button, {
                     AnchorPoint = Vector2.new(0, 1),
