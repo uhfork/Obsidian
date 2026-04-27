@@ -7892,7 +7892,9 @@ function Library:CreateWindow(WindowInfo)
                     LeftCover.BackgroundTransparency = 1
                     RightCover.BackgroundTransparency = 1
 
-                    ButtonLabel.TextTransparency = 0
+                    if ButtonLabel then
+                        ButtonLabel.TextTransparency = 0
+                    end
                     if ButtonIcon then
                         ButtonIcon.ImageTransparency = 0
                     end
@@ -7910,7 +7912,9 @@ function Library:CreateWindow(WindowInfo)
                     LeftCover.BackgroundTransparency = 0
                     RightCover.BackgroundTransparency = 0
 
-                    ButtonLabel.TextTransparency = 0.5
+                    if ButtonLabel then
+                        ButtonLabel.TextTransparency = 0.5
+                    end
                     if ButtonIcon then
                         ButtonIcon.ImageTransparency = 0.5
                     end
