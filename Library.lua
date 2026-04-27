@@ -7581,13 +7581,12 @@ function Library:CreateWindow(WindowInfo)
                 GroupboxArrow = New("ImageLabel", {
                     AnchorPoint = Vector2.new(1, 0),
                     BackgroundTransparency = 1,
-                    Position = UDim2.new(1, -6, 0, 9),
-                    Size = UDim2.fromOffset(16, 16),
+                    Position = UDim2.new(1, -8, 0, 8),
+                    Size = UDim2.fromOffset(20, 20),
                     Image = ArrowIcon and ArrowIcon.Url or "",
-                    ImageColor3 = "FontColor",
+                    ImageColor3 = "WhiteColor",
                     ImageRectOffset = ArrowIcon and ArrowIcon.ImageRectOffset or Vector2.zero,
                     ImageRectSize = ArrowIcon and ArrowIcon.ImageRectSize or Vector2.zero,
-                    ImageTransparency = 0.5,
                     Rotation = 180,
                     Parent = GroupboxHolder,
                 })
@@ -7632,7 +7631,7 @@ function Library:CreateWindow(WindowInfo)
                 Collapsed = false
             }
 
-            function Groupbox:Resize(Animate)
+            function Groupbox:Resize(Tween: boolean?)
                 local GroupboxSize
 
                 if self.Collapsed then
@@ -7641,10 +7640,10 @@ function Library:CreateWindow(WindowInfo)
                     GroupboxSize = UDim2.new(1, 0, 0, (GroupboxList.AbsoluteContentSize.Y / Library.DPIScale) + 49)
                 end
 
-                GroupboxLine.BackgroundTransparency = self.Collapsed and 1 or 0
+                GroupboxLine.Visible = self.Collapsed and true or false
 
-                if Animate then
-                    TweenService:Create(GroupboxHolder, Library.TweenInfo, {
+                if Tween then
+                    TweenService:Create(GroupboxHolder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                         Size = GroupboxSize
                     }):Play()
                 else
@@ -7656,7 +7655,7 @@ function Library:CreateWindow(WindowInfo)
                 self.Collapsed = State
                 GroupboxContainer.Visible = not State
 
-                TweenService:Create(GroupboxArrow, Library.TweenInfo, {
+                TweenService:Create(GroupboxArrow, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                     Rotation = State and 0 or 180
                 }):Play()
 
@@ -7824,7 +7823,7 @@ function Library:CreateWindow(WindowInfo)
                         ImageRectOffset = BoxIcon.ImageRectOffset,
                         ImageRectSize = BoxIcon.ImageRectSize,
                         ImageTransparency = 0.5,
-                        Size = (Name and Name ~= "") and UDim2.fromOffset(18, 18) or UDim2.fromOffset(22, 22),
+                        Size = (Name and Name ~= "") and UDim2.fromOffset(18, 18) or UDim2.fromOffset(20, 20),
                         Parent = ButtonContent,
                     })
                 end
