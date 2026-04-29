@@ -7640,10 +7640,10 @@ function Library:CreateWindow(WindowInfo)
                     GroupboxSize = UDim2.new(1, 0, 0, (GroupboxList.AbsoluteContentSize.Y / Library.DPIScale) + 49)
                 end
 
-                GroupboxLine.Visible = self.Collapsed and true or false
+                GroupboxLine.Visible = not self.Collapsed
 
                 if Tween then
-                    TweenService:Create(GroupboxHolder, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    TweenService:Create(GroupboxHolder, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                         Size = GroupboxSize
                     }):Play()
                 else
@@ -7655,7 +7655,7 @@ function Library:CreateWindow(WindowInfo)
                 self.Collapsed = State
                 GroupboxContainer.Visible = not State
 
-                TweenService:Create(GroupboxArrow, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                TweenService:Create(GroupboxArrow, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                     Rotation = State and 0 or 180
                 }):Play()
 
