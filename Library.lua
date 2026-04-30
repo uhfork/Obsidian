@@ -1084,15 +1084,6 @@ function Library:GetCustomIcon(IconName: string): any
         IconName = string.format("rbxassetid://%s", tostring(IconName))
     end
 
-    if string.match(IconName, "^rbxthumb://") then
-        return {
-            Url = IconName,
-            ImageRectOffset = Vector2.zero,
-            ImageRectSize = Vector2.zero,
-            Custom = true,
-        }
-    end
-
     local CustomIcon = IsValidCustomIcon(IconName)
     if CustomIcon then
         return {
