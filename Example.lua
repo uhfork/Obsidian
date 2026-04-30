@@ -646,7 +646,7 @@ Tab1:AddToggle("Tab1Toggle", { Text = "Tab1 Toggle" })
 local Tab2 = TabBox:AddTab("Tab 2", "carrot")
 Tab2:AddToggle("Tab2Toggle", { Text = "Tab2 Toggle" })
 
-local Tab3 = TabBox:AddTab(nil, "carrot") -- You could leave it empty or nil to toggle icon only
+local Tab3 = TabBox:AddTab("", "carrot") -- You could leave it empty to toggle icon only
 Tab3:AddToggle("Tab3Toggle", { Text = "Tab3 Toggle" })
 
 Library:OnUnload(function()
