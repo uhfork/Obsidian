@@ -6630,12 +6630,11 @@ function Library:SetBackgroundImageEnabled(State: boolean)
     self:UpdateColorsUsingRegistry()
 end
 
-function Library:SetBackgroundImage(Image: string): any
-    Image = Library:GetCustomImage(Image)
-    assert(typeof(State) == "string", "Expected string for Image, got: " .. typeof(Image))
+function Library:SetBackgroundImage(Image: string | number)
+    assert(typeof(Image) == "string" or typeof(Image) == "number", "Expected string/number for Image, got: " .. typeof(State))
     
-    self.Scheme.BackgroundImage = Image
-    self.Window.BackgroundImage.Image = Image
+    self.Scheme.BackgroundImage = Library:GetCustomImage(Image).Url
+    self.Window.BackgroundImage.Image = Library:GetCustomImage(Image).Url
     self:UpdateColorsUsingRegistry()
 end
 
