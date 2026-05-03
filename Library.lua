@@ -1857,37 +1857,12 @@ function Library:AddContextMenu(
     IgnoreCornerRadius: boolean?
 )
     local Menu
-    local MenuHolder
     local ParentGui = Holder:FindFirstAncestorOfClass("ScreenGui")
     if ParentGui ~= ScreenGui and (Library.ActiveLoading and ParentGui ~= Library.ActiveLoading.ScreenGui) then
         ParentGui = ScreenGui
     end
 
-    -- Top 10 most shocking fix 😱
-    local Container = New("Frame", {
-        AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundTransparency = 1,
-        Size = typeof(Size) == "function" and Size() or Size,
-        Visible = false,
-        ZIndex = 10,
-        Parent = ParentGui,
-    })
-
-    table.insert(
-        Library.Scales,
-        New("UIScale", {
-            Parent = Container,
-        })
-    )
-
     if List then
-        -- roblox i genuinely hate u
-        
-        MenuHolder = New("Frame", {
-            BackgroundTransparency = 1,
-            Size = UDim2.fromScale(1, 1),
-            Parent = Container,
-        })
         Menu = New("ScrollingFrame", {
             AutomaticCanvasSize = List == 2 and Enum.AutomaticSize.Y or Enum.AutomaticSize.None,
             AutomaticSize = List == 1 and Enum.AutomaticSize.Y or Enum.AutomaticSize.None,
@@ -1896,27 +1871,34 @@ function Library:AddContextMenu(
             CanvasSize = UDim2.fromOffset(0, 0),
             ScrollBarImageColor3 = "OutlineColor",
             ScrollBarThickness = List == 2 and 2 or 0,
-            Size = UDim2.fromScale(1, 1),
+            Size = typeof(Size) == "function" and Size() or Size,
             TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
+            Visible = false,
             ZIndex = 10,
-            Parent = MenuHolder,
+            Parent = ParentGui,
         })
     else
         Menu = New("Frame", {
             BackgroundColor3 = "BackgroundColor",
-            Size = UDim2.fromScale(1, 1),
+            Size = typeof(Size) == "function" and Size() or Size,
+            Visible = false,
             ZIndex = 10,
-            Parent = Container,
+            Parent = ParentGui,
         })
-        MenuHolder = Menu
     end
+    table.insert(
+        Library.Scales,
+        New("UIScale", {
+            Parent = Menu,
+        })
+    )
 
     New("UIStroke", {
         Color = "OutlineColor",
-        Parent = MenuHolder,
+        Parent = Menu,
     })
 
-    if Library.CornerElements and IgnoreCornerRadius ~= true then
+    if IgnoreCornerRadius ~= true then
         table.insert(
             Library.Corners,
             New("UICorner", {
@@ -1953,31 +1935,31 @@ function Library:AddContextMenu(
         Table.Active = true
 
         if typeof(Offset) == "function" then
-            Container.Position = UDim2.fromOffset(
+            Menu.Position = UDim2.fromOffset(
                 math.floor(Holder.AbsolutePosition.X + Offset()[1]),
                 math.floor(Holder.AbsolutePosition.Y + Offset()[2])
             )
         else
-            Container.Position = UDim2.fromOffset(
+            Menu.Position = UDim2.fromOffset(
                 math.floor(Holder.AbsolutePosition.X + Offset[1]),
                 math.floor(Holder.AbsolutePosition.Y + Offset[2])
             )
         end
-        Container.Size = typeof(Table.Size) == "function" and Table.Size() or Table.Size
+        Menu.Size = typeof(Table.Size) == "function" and Table.Size() or Table.Size
         if typeof(ActiveCallback) == "function" then
             Library:SafeCallback(ActiveCallback, true)
         end
 
-        Container.Visible = true
+        Menu.Visible = true
 
         Table.Signal = Holder:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
             if typeof(Offset) == "function" then
-                Container.Position = UDim2.fromOffset(
+                Menu.Position = UDim2.fromOffset(
                     math.floor(Holder.AbsolutePosition.X + Offset()[1]),
                     math.floor(Holder.AbsolutePosition.Y + Offset()[2])
                 )
             else
-                Container.Position = UDim2.fromOffset(
+                Menu.Position = UDim2.fromOffset(
                     math.floor(Holder.AbsolutePosition.X + Offset[1]),
                     math.floor(Holder.AbsolutePosition.Y + Offset[2])
                 )
@@ -1989,7 +1971,7 @@ function Library:AddContextMenu(
         if CurrentMenu ~= Table then
             return
         end
-        Container.Visible = false
+        Menu.Visible = false
 
         if Table.Signal then
             Table.Signal:Disconnect()
@@ -2012,7 +1994,7 @@ function Library:AddContextMenu(
 
     function Table:SetSize(Size)
         Table.Size = Size
-        Container.Size = typeof(Size) == "function" and Size() or Size
+        Menu.Size = typeof(Size) == "function" and Size() or Size
     end
 
     return Table
@@ -2040,6 +2022,7 @@ end))
 
 --// Tooltip \\--
 local TooltipLabel = New("TextLabel", {
+    Name = "Tooltip",
     AutomaticSize = Enum.AutomaticSize.Y,
     BackgroundColor3 = "BackgroundColor",
     TextSize = 14,
@@ -2065,15 +2048,13 @@ New("UIStroke", {
     Color = "OutlineColor",
     Parent = TooltipLabel,
 })
-if Library.CornerElements then
-    table.insert(
-        Library.Corners,
-        New("UICorner", {
-            CornerRadius = UDim.new(0, Library.CornerRadius / 2),
-            Parent = TooltipLabel,
-        })
-    )
-end
+table.insert(
+    Library.Corners,
+    New("UICorner", {
+        CornerRadius = UDim.new(0, Library.CornerRadius / 2),
+        Parent = TooltipLabel,
+    })
+)
 TooltipLabel:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
     if Library.Unloaded then
         return
@@ -4859,13 +4840,17 @@ do
 
         local Dropdown = {
             Text = typeof(Info.Text) == "string" and Info.Text or nil,
+
             Value = Info.Multi and {} or nil,
             Values = Info.Values,
             DisabledValues = Info.DisabledValues,
+            ValueImages = Info.ValueImages,
+
             Multi = Info.Multi,
 
             SpecialType = Info.SpecialType,
             ExcludeLocalPlayer = Info.ExcludeLocalPlayer,
+            EnablePlayerImages = Info.EnablePlayerImages,
 
             Tooltip = Info.Tooltip,
             DisabledTooltip = Info.DisabledTooltip,
@@ -4898,15 +4883,13 @@ do
             Parent = Holder,
         })
 
-        local Display = New("TextButton", {
-            Active = not Dropdown.Disabled,
+        local DisplayContainer = New("TextButton", {
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = "MainColor",
             Position = UDim2.fromScale(0, 1),
             Size = UDim2.new(1, 0, 0, 21),
-            Text = "---",
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left,
+            Text = "",
+            TextTransparency = 1,
             ZIndex = 2,
             Parent = Holder,
         })
@@ -4914,12 +4897,12 @@ do
         New("UIPadding", {
             PaddingLeft = UDim.new(0, 8),
             PaddingRight = UDim.new(0, 4),
-            Parent = Display,
+            Parent = DisplayContainer,
         })
 
         New("UIStroke", {
             Color = "OutlineColor",
-            Parent = Display,
+            Parent = DisplayContainer,
         })
 
         if Library.CornerElements and Library.CornerRadiusDropdown == true then
@@ -4927,10 +4910,31 @@ do
                 Library.Corners,
                 New("UICorner", {
                     CornerRadius = UDim.new(0, Library.CornerRadius / 2),
-                    Parent = Display,
+                    Parent = DisplayContainer,
                 })
             )
         end
+
+        local DisplayImage = New("ImageLabel", {
+            BackgroundTransparency = 1,
+            Position = UDim2.fromOffset(-4, 3),
+            Size = UDim2.fromOffset(16, 16),
+            Image = "",
+            ImageTransparency = 1,
+            ZIndex = 2,
+            Parent = DisplayContainer,
+        })
+
+        local DisplayButton = New("TextButton", {
+            Active = not Dropdown.Disabled,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 21),
+            Text = "---",
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 2,
+            Parent = DisplayContainer,
+        })
 
         -- Dropdowns cant currently use corner radius since the button is supposed to be connected with the menu
         -- This can be done properly without some random frames and overlaying textlabel over the button after Roblox adds UICorner with specific corner radiuses
@@ -4944,7 +4948,7 @@ do
             ImageTransparency = 0.5,
             Position = UDim2.fromScale(1, 0.5),
             Size = UDim2.fromOffset(16, 16),
-            Parent = Display,
+            Parent = DisplayContainer,
         })
 
         local SearchBox
@@ -4957,7 +4961,7 @@ do
                 TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Visible = false,
-                Parent = Display,
+                Parent = DisplayButton,
             })
             New("UIPadding", {
                 PaddingLeft = UDim.new(0, 8),
@@ -4965,17 +4969,36 @@ do
             })
         end
 
+        local GetValueImage = function(Value)
+            if not Value then
+                return nil
+            end
+
+            local ValueImage = nil
+            if Dropdown.SpecialType == "Player" and Dropdown.EnablePlayerImages == true then
+                if typeof(Value) == "Instance" and Value:IsA("Player") then
+                    ValueImage = { Url = string.format("rbxthumb://type=AvatarHeadShot&id=%s&w=48&h=48", tostring(Value.UserId)) }
+                end
+            else
+                if Info.ValueImages and Info.ValueImages[Value] then
+                    ValueImage = Library:GetCustomIcon(Info.ValueImages[Value])
+                end
+            end
+
+            return ValueImage
+        end
+
         local MenuTable = Library:AddContextMenu(
-            Display,
+            DisplayContainer,
             function()
-                return UDim2.fromOffset(Display.AbsoluteSize.X / Library.DPIScale, 0)
+                return UDim2.fromOffset((DisplayContainer.AbsoluteSize.X / Library.DPIScale) + 1, 0)
             end,
             function()
-                return { 0.5, Display.AbsoluteSize.Y + 1.5 }
+                return { 0.5, DisplayContainer.AbsoluteSize.Y + 1.5 }
             end,
             2,
             function(Active: boolean)
-                Display.TextTransparency = (Active and SearchBox) and 1 or 0
+                DisplayButton.TextTransparency = (Active and SearchBox) and 1 or 0
                 ArrowImage.ImageTransparency = Active and 0 or 0.5
                 ArrowImage.Rotation = Active and 180 or 0
                 if SearchBox then
@@ -4991,7 +5014,7 @@ do
             local Y = math.clamp((Count or GetTableSize(Dropdown.Values)) * 21, 0, Info.MaxVisibleDropdownItems * 21)
 
             MenuTable:SetSize(function()
-                return UDim2.fromOffset(Display.AbsoluteSize.X / Library.DPIScale, Y)
+                return UDim2.fromOffset((DisplayContainer.AbsoluteSize.X / Library.DPIScale) + 1, Y)
             end)
         end
 
@@ -5001,7 +5024,8 @@ do
             end
 
             Label.TextTransparency = Dropdown.Disabled and 0.8 or 0
-            Display.TextTransparency = Dropdown.Disabled and 0.8 or 0
+            DisplayButton.TextTransparency = Dropdown.Disabled and 0.8 or 0
+            DisplayImage.ImageTransparency = Dropdown.Disabled and 0.8 or 0
             ArrowImage.ImageTransparency = Dropdown.Disabled and 0.8 or MenuTable.Active and 0 or 0.5
         end
 
@@ -5011,10 +5035,15 @@ do
             end
 
             local Str = ""
+            local ValueImage = nil
 
             if Info.Multi then
                 for _, Value in Dropdown.Values do
                     if Dropdown.Value[Value] then
+                        if not ValueImage then
+                            ValueImage = GetValueImage(Value)
+                        end
+
                         Str = Str
                             .. (Info.FormatDisplayValue and tostring(Info.FormatDisplayValue(Value)) or tostring(Value))
                             .. ", "
@@ -5023,13 +5052,15 @@ do
 
                 Str = Str:sub(1, #Str - 2)
             else
+                ValueImage = GetValueImage(Dropdown.Value)
                 Str = Dropdown.Value and tostring(Dropdown.Value) or ""
+
                 if Str ~= "" and Info.FormatDisplayValue then
                     Str = tostring(Info.FormatDisplayValue(Str))
                 end
             end
 
-            local MaxWidth = Display.AbsoluteSize.X - 28 -- left padding + right arrow space
+            local MaxWidth = DisplayButton.AbsoluteSize.X - 28
             local TextWidth = Library:GetTextBounds(Str, Library.Scheme.Font, 14, math.huge)
 
             if TextWidth > MaxWidth then
@@ -5042,7 +5073,20 @@ do
                 until TextWidth <= MaxWidth or #Base <= 0
             end
 
-            Display.Text = (Str == "" and "---" or Str)
+            DisplayButton.Text = (Str == "" and "---" or Str)
+            
+            if ValueImage then
+                DisplayImage.Image = ValueImage.Url
+                DisplayImage.ImageRectOffset = ValueImage.ImageRectOffset or Vector2.zero
+                DisplayImage.ImageRectSize = ValueImage.ImageRectSize or Vector2.zero
+                DisplayImage.ImageTransparency = 0
+            else
+                DisplayImage.Image = ""
+                DisplayImage.ImageTransparency = 1
+            end
+
+            DisplayButton.Size = ValueImage and UDim2.new(1, -8, 0, 21) or UDim2.new(1, 0, 0, 21)
+            DisplayButton.Position = ValueImage and UDim2.fromOffset(14, 0) or UDim2.fromOffset(0, 0)
         end
 
         function Dropdown:OnChanged(Func)
@@ -5213,17 +5257,13 @@ do
             local Values = Dropdown.Values
             local DisabledValues = Dropdown.DisabledValues
 
-            for _, Child in ipairs(MenuTable.Menu:GetChildren()) do
-                if not Child:IsA("UIListLayout") then
-                    Child:Destroy()
-                end
+            for Button, _ in Buttons do
+                Button.Parent:Destroy()
             end
             table.clear(Buttons)
 
-            local Count = 0
-            
             if Info.Multi then
-                local SelectButton = self:AddButton("Select All", function()
+                self:AddButton("Select All", function()
                     local Selected = {}
 
                     for _, Value in Values do
@@ -5232,32 +5272,34 @@ do
                         end
                     end
 
-                    Dropdown:SetValue(Selected)
-                end)
-                SelectButton:AddButton("Deselect All", function()
-                    Dropdown:SetValue()
+                    self:SetValue(Selected)
+                end):AddButton("Deselect All", function()
+                    self:SetValue()
                 end)
             end
 
             MenuTable.Menu.UIListLayout.Padding = UDim.new(0, Info.Multi and 4 or 0)
-            New("UIPadding", {
-                PaddingTop = UDim.new(0, 4),
-                Parent = MenuTable.Menu,
-            })
+            local ButtonHolder
+            if Info.Multi then
+                New("UIPadding", {
+                    PaddingTop = UDim.new(0, 4),
+                    Parent = MenuTable.Menu,
+                })
 
-            local ButtonHolder = New("Frame", {
-                AutomaticSize = Enum.AutomaticSize.Y,
-                BackgroundTransparency = 1,
-                LayoutOrder = Info.Multi and 1 or 0,
-                Size = UDim2.fromScale(1, 1),
-                Parent = MenuTable.Menu,
-            })
-            New("UIListLayout", {
-                Padding = UDim.new(0, 0),
-                Parent = ButtonHolder,
-            })
-            
+                ButtonHolder = New("Frame", {
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    BackgroundTransparency = 1,
+                    LayoutOrder = Info.Multi and 1 or 0,
+                    Size = UDim2.fromScale(1, 1),
+                    Parent = MenuTable.Menu,
+                })
+                New("UIListLayout", {
+                    Padding = UDim.new(0, 0),
+                    Parent = ButtonHolder,
+                })
+            end
 
+            local Count = 0
             for _, Value in Values do
                 local FormattedValue = tostring(Info.FormatListValue and Info.FormatListValue(Value) or Value)
                 if SearchBox and not FormattedValue:lower():match(SearchBox.Text:lower()) then
@@ -5268,17 +5310,36 @@ do
 
                 local IsDisabled = table.find(DisabledValues, Value)
                 local Table = {}
+                local ValueImage = GetValueImage(Value)
 
-                local Button = New("TextButton", {
+                local Container = New("Frame", {
                     BackgroundColor3 = "MainColor",
                     BackgroundTransparency = 1,
                     LayoutOrder = IsDisabled and 1 or 0,
                     Size = UDim2.new(1, 0, 0, 21),
+                    Parent = Info.Multi and ButtonHolder or MenuTable.Menu,
+                })
+
+                local Image = ValueImage and New("ImageLabel", {
+                    BackgroundTransparency = 1,
+                    Image = ValueImage.Url,
+                    ImageRectOffset = ValueImage.ImageRectOffset,
+                    ImageRectSize = ValueImage.ImageRectSize,
+                    ImageTransparency = 0.5,
+                    Size = UDim2.fromOffset(16, 16),
+                    Position = UDim2.fromOffset(4, 3),
+                    Parent = Container,
+                })
+
+                local Button = New("TextButton", {
+                    BackgroundTransparency = 1,
+                    Size = ValueImage and UDim2.new(1, -18, 0, 21) or UDim2.new(1, 0, 0, 21),
+                    Position = ValueImage and UDim2.fromOffset(18, 0) or UDim2.fromOffset(0, 0),
                     Text = FormattedValue,
                     TextSize = 14,
                     TextTransparency = 0.5,
                     TextXAlignment = Enum.TextXAlignment.Left,
-                    Parent = ButtonHolder,
+                    Parent = Container,
                 })
                 New("UIPadding", {
                     PaddingLeft = UDim.new(0, 7),
@@ -5300,8 +5361,12 @@ do
                         Selected = Dropdown.Value == Value
                     end
 
-                    Button.BackgroundTransparency = Selected and 0 or 1
+                    Container.BackgroundTransparency = Selected and 0 or 1
                     Button.TextTransparency = IsDisabled and 0.8 or Selected and 0 or 0.5
+
+                    if Image then
+                        Image.ImageTransparency = IsDisabled and 0.8 or Selected and 0 or 0.5
+                    end
                 end
 
                 if not IsDisabled then
@@ -5342,7 +5407,7 @@ do
         function Dropdown:SetValue(Value)
             if Info.Multi then
                 local Table = {}
-
+				
                 for Val, Active in Value or {} do
                     if typeof(Active) ~= "boolean" then
                         Table[Active] = true
@@ -5410,6 +5475,27 @@ do
             Dropdown:BuildDropdownList()
         end
 
+        function Dropdown:SetValueImages(ValueImages)
+            if typeof(ValueImages) ~= "table" then
+                return
+            end
+            
+            Dropdown.ValueImages = ValueImages
+            Dropdown:BuildDropdownList()
+        end
+
+        function Dropdown:AddValueImages(ValueImages)
+            if typeof(ValueImages) ~= "table" then
+                return
+            end
+            
+            for key, val in ValueImages do
+                Dropdown.ValueImages[key] = val
+            end
+            
+            Dropdown:BuildDropdownList()
+        end
+
         function Dropdown:SetDisabled(Disabled: boolean)
             Dropdown.Disabled = Disabled
 
@@ -5418,7 +5504,7 @@ do
             end
 
             MenuTable:Close()
-            Display.Active = not Dropdown.Disabled
+            DisplayButton.Active = not Dropdown.Disabled
             Dropdown:UpdateColors()
         end
 
@@ -5437,13 +5523,16 @@ do
             Label.Visible = not not Text
         end
 
-        Display.MouseButton1Click:Connect(function()
+        local ToggleDropdown = function()
             if Dropdown.Disabled then
                 return
             end
 
             MenuTable:Toggle()
-        end)
+        end
+
+        DisplayContainer.MouseButton1Click:Connect(ToggleDropdown)
+        DisplayButton.MouseButton1Click:Connect(ToggleDropdown)
 
         if SearchBox then
             SearchBox:GetPropertyChangedSignal("Text"):Connect(Dropdown.BuildDropdownList)
@@ -5482,7 +5571,7 @@ do
         end
 
         if typeof(Dropdown.Tooltip) == "string" or typeof(Dropdown.DisabledTooltip) == "string" then
-            Dropdown.TooltipTable = Library:AddTooltip(Dropdown.Tooltip, Dropdown.DisabledTooltip, Display)
+            Dropdown.TooltipTable = Library:AddTooltip(Dropdown.Tooltip, Dropdown.DisabledTooltip, DisplayContainer)
             Dropdown.TooltipTable.Disabled = Dropdown.Disabled
         end
 
@@ -6679,7 +6768,7 @@ function Library:SetBackgroundImageEnabled(State: boolean)
 end
 
 function Library:SetBackgroundImage(Image: string | number)
-    assert(typeof(Image) == "string" or typeof(Image) == "number", "Expected string/number for Image, got: " .. typeof(State))
+    assert(typeof(Image) == "string" or typeof(Image) == "number", "Expected string/number for Image, got: " .. typeof(Image))
     
     self.Scheme.BackgroundImage = Library:GetCustomImage(Image).Url
     self.Window.BackgroundImage.Image = Library:GetCustomImage(Image).Url
@@ -7168,7 +7257,13 @@ function Library:CreateWindow(WindowInfo)
 
         for _, UICorner in Library.Corners do
             if UICorner.CornerRadius.Offset == Library.CornerRadius / 2 then
-                UICorner.CornerRadius = UDim.new(0, Radius / 2)
+                if UICorner.Parent == TooltipLabel then
+                    if Library.CornerElements == false then
+                        UICorner:Destroy()
+                    end
+                else
+                    UICorner.CornerRadius = UDim.new(0, Radius / 2)
+                end
             else
                 UICorner.CornerRadius = UDim.new(0, Radius)
             end
@@ -10008,6 +10103,8 @@ function Library:CreateWindow(WindowInfo)
     end
 
     --// Execution \\--
+    Window:SetCornerRadius(WindowInfo.CornerRadius)
+
     SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
         Library:UpdateSearch(SearchBox.Text)
     end)
