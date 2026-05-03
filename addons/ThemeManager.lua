@@ -40,7 +40,7 @@ end
 
 local ThemeManager = {
     Folder = "Obsidian",
-    Libraty = nil,
+    Library = nil,
     AppliedToTab = false,
     BuiltInThemes = {
         ["Default"] = { 1, { FontColor = "ffffff", MainColor = "191919", AccentColor = "7d55ff", BackgroundColor = "0f0f0f", OutlineColor = "282828" } },
@@ -187,7 +187,7 @@ do
         self.Library:UpdateColorsUsingRegistry()
     end
 
-    --// Get, Load, Save, Delete, Refresh \\--
+    --// Get, Load, Save, Delete, Export, Import, Refresh \\--
     function ThemeManager:GetCustomTheme(file)
         local path = self.Folder .. "/themes/" .. file .. ".json"
         if not isfile(path) then
@@ -277,7 +277,12 @@ do
 
     function ThemeManager:SaveCustomTheme(file)
         if file:gsub(" ", "") == "" then
-            self.Library:Notify("Invalid file name for theme (empty)", 3)
+            self.Library:Notify({
+                Title = "Warning",
+                Description = "Invalid file name for theme (empty).",
+                Time = 3,
+                Icon = "triangle-alert"
+            })
             return
         end
 
@@ -304,6 +309,61 @@ do
         if not success then
             return false, "delete file error"
         end
+
+        return true
+    end
+
+    function ThemeManager:ExportTheme(name)
+        if not name then
+            return false, "no theme file is selected"
+        end
+
+        ThemeManager:CheckFolderTree()
+
+        local file = self.Folder .. "/themes/" .. name .. ".json"
+
+        if not isfile(file) then
+            return false, "invalid file"
+        end
+
+        local success, content = pcall(readfile, file)
+        if not success then
+            return false, "failed to read file"
+        end
+
+        return true, content
+    end
+
+    function ThemeManager:ImportTheme(themeData)
+        if not themeData or themeData == "" then
+            return false, "no theme data provided"
+        end
+
+        local success, decoded = pcall(HttpService.JSONDecode, HttpService, themeData)
+        if not success then
+            return false, "invalid JSON data"
+        end
+
+        for _, field in ThemeFields do
+            local value = decoded[field]
+            if value then
+                self.Library.Scheme[field] = Color3.fromHex(value)
+
+                if self.Library.Options[field] then
+                    self.Library.Options[field]:SetValueRGB(Color3.fromHex(value))
+                end
+            end
+        end
+
+        if decoded.FontFace and Enum.Font[decoded.FontFace] then
+            self.Library:SetFont(Enum.Font[decoded.FontFace])
+
+            if self.Library.Options.FontFace then
+                self.Library.Options.FontFace:SetValue(decoded.FontFace)
+            end
+        end
+
+        self:ThemeUpdate()
 
         return true
     end
@@ -336,7 +396,7 @@ do
     end
 
     --// GUI \\--
-    function ThemeManager:CreateThemeManager(groupbox)
+    function ThemeManager:CreateOptions(groupbox)
         groupbox:AddLabel("Background Color"):AddColorPicker("BackgroundColor", { Default = self.Library.Scheme.BackgroundColor })
         groupbox:AddLabel("Main Color"):AddColorPicker("MainColor", { Default = self.Library.Scheme.MainColor })
         groupbox:AddLabel("Accent Color"):AddColorPicker("AccentColor", { Default = self.Library.Scheme.AccentColor })
@@ -361,9 +421,12 @@ do
         groupbox:AddDropdown("ThemeManager_ThemeList", { Text = "Theme List:", Values = ThemesArray, Default = 1 })
         groupbox:AddButton("Set as Default", function()
             self:SaveDefault(self.Library.Options.ThemeManager_ThemeList.Value)
-            self.Library:Notify(
-                string.format("Set default theme to %q", self.Library.Options.ThemeManager_ThemeList.Value)
-            )
+            self.Library:Notify({
+                Title = "Success",
+                Description = string.format("Set default theme to %q", self.Library.Options.ThemeManager_ThemeList.Value),
+                Time = 3,
+                Icon = "circle-check"
+            })
         end)
 
         self.Library.Options.ThemeManager_ThemeList:OnChanged(function()
@@ -377,13 +440,23 @@ do
             local name = self.Library.Options.ThemeManager_CustomThemeName.Value
 
             if name:gsub(" ", "") == "" then
-                self.Library:Notify("Invalid theme name (empty)", 2)
+                self.Library:Notify({
+                    Title = "Warning",
+                    Description = "Invalid theme name (empty).",
+                    Time = 3,
+                    Icon = "triangle-alert"
+                })
                 return
             end
 
             self:SaveCustomTheme(name)
 
-            self.Library:Notify(string.format("Created theme %q", name))
+            self.Library:Notify({
+                Title = "Success",
+                Description = string.format("Created theme %q", name),
+                Time = 3,
+                Icon = "circle-check"
+            })
             self.Library.Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
             self.Library.Options.ThemeManager_CustomThemeList:SetValue(nil)
         end)
@@ -394,57 +467,152 @@ do
             "ThemeManager_CustomThemeList",
             { Text = "Custom Themes:", Values = self:ReloadCustomThemes(), AllowNull = true, Default = 1 }
         )
-        groupbox:AddButton("Load Theme", function()
+        groupbox:AddButton("Load", function()
             local name = self.Library.Options.ThemeManager_CustomThemeList.Value
 
             self:ApplyTheme(name)
-            self.Library:Notify(string.format("Loaded theme %q", name))
-        end)
-        groupbox:AddButton("Overwrite Theme", function()
+            self.Library:Notify({
+                Title = "Success",
+                Description = string.format("Loaded theme %q", name),
+                Time = 3,
+                Icon = "circle-check"
+            })
+        end):AddButton("Overwrite", function()
             local name = self.Library.Options.ThemeManager_CustomThemeList.Value
 
             self:SaveCustomTheme(name)
-            self.Library:Notify(string.format("Overwrote config %q", name))
+            self.Library:Notify({
+                Title = "Success",
+                Description = string.format("Overwrote theme %q", name),
+                Time = 3,
+                Icon = "circle-check"
+            })
         end)
-        groupbox:AddButton("Delete Theme", function()
+        groupbox:AddButton({ Text = "Delete", DoubleClick = true, Func = function()
             local name = self.Library.Options.ThemeManager_CustomThemeList.Value
 
             local success, err = self:Delete(name)
             if not success then
-                self.Library:Notify("Failed to delete theme: " .. err)
+                self.Library:Notify({
+                    Title = "Error",
+                    Description = "Failed to delete theme: " .. err .. ".",
+                    Icon = "circle-x"
+                })
                 return
             end
 
-            self.Library:Notify(string.format("Deleted theme %q", name))
+            self.Library:Notify({
+                Title = "Success",
+                Description = string.format("Deleted theme %q", name),
+                Time = 3,
+                Icon = "circle-check"
+            })
             self.Library.Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
             self.Library.Options.ThemeManager_CustomThemeList:SetValue(nil)
+        end }):AddButton("Export", function()
+            local name = self.Library.Options.ThemeManager_CustomThemeList.Value
+
+            if not name then
+                self.Library:Notify({
+                    Title = "Warning",
+                    Description = "No theme selected.",
+                    Time = 3,
+                    Icon = "triangle-alert"
+                })
+                return
+            end
+
+            local success, data = self:ExportTheme(name)
+            if not success then
+                self.Library:Notify({
+                    Title = "Error",
+                    Description = "Failed to export theme: " .. data .. ".",
+                    Time = 3,
+                    Icon = "circle-x"
+                })
+                return
+            end
+
+            setclipboard(data)
+
+            self.Library:Notify({
+                Title = "Success",
+                Description = string.format("Exported theme %q to clipboard.", name),
+                Time = 3,
+                Icon = "circle-check"
+            })
         end)
         groupbox:AddButton("Refresh List", function()
             self.Library.Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
             self.Library.Options.ThemeManager_CustomThemeList:SetValue(nil)
         end)
-        groupbox:AddButton("Set as Default", function()
+        groupbox:AddDivider()
+        groupbox:AddInput("ThemeManager_ImportThemeData", { Text = "Import Theme:" })
+        groupbox:AddButton("Import Theme", function()
+            local data = self.Library.Options.ThemeManager_ImportThemeData.Value
+
+            if data:gsub(" ", "") == "" then
+                self.Library:Notify({
+                    Title = "Warning",
+                    Description = "No theme data provided.",
+                    Time = 3,
+                    Icon = "triangle-alert"
+                })
+                return
+            end
+
+            local success, err = self:ImportTheme(data)
+            if not success then
+                self.Library:Notify({
+                    Title = "Error",
+                    Description = "Failed to import theme: " .. err .. ".",
+                    Time = 3,
+                    Icon = "circle-x"
+                })
+                return
+            end
+
+            self.Library:Notify({
+                Title = "Success",
+                Description = "Imported theme.",
+                Time = 3,
+                Icon = "circle-check"
+            })
+        end)
+        groupbox:AddDivider()
+        groupbox:AddButton("Set Default", function()
             if
                 self.Library.Options.ThemeManager_CustomThemeList.Value ~= nil
                 and self.Library.Options.ThemeManager_CustomThemeList.Value ~= ""
             then
                 self:SaveDefault(self.Library.Options.ThemeManager_CustomThemeList.Value)
-                self.Library:Notify(
-                    string.format("Set default theme to %q", self.Library.Options.ThemeManager_CustomThemeList.Value)
-                )
+                self.Library:Notify({
+                    Title = "Success",
+                    Description = string.format("Set default theme to %q", self.Library.Options.ThemeManager_CustomThemeList.Value),
+                    Time = 3,
+                    Icon = "circle-check"
+                })
             end
-        end)
-        groupbox:AddButton("Reset Default", function()
+        end):AddButton({ Text = "Reset Default", DoubleClick = true, Func = function()
             local success = pcall(delfile, self.Folder .. "/themes/default.txt")
             if not success then
-                self.Library:Notify("Failed to reset default: delete file error")
+                self.Library:Notify({
+                    Title = "Error",
+                    Description = "Failed to reset default: delete file error.",
+                    Icon = "circle-x"
+                })
                 return
             end
 
-            self.Library:Notify("Set default theme to nothing")
+            self.Library:Notify({
+                    Title = "Success",
+                    Description = "Set default theme to nothing",
+                    Time = 3,
+                    Icon = "circle-check"
+                })
             self.Library.Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
             self.Library.Options.ThemeManager_CustomThemeList:SetValue(nil)
-        end)
+        end })
 
         self:LoadDefault()
         self.AppliedToTab = true
@@ -481,15 +649,15 @@ do
         return tab:AddLeftGroupbox("Themes", "paintbrush")
     end
 
-    function ThemeManager:ApplyToTab(tab)
+    function ThemeManager:AddThemeOptions(tab)
         assert(self.Library, "Must set ThemeManager.Library first!")
         local groupbox = self:CreateGroupBox(tab)
-        self:CreateThemeManager(groupbox)
+        self:CreateOptions(groupbox)
     end
 
     function ThemeManager:ApplyToGroupbox(groupbox)
         assert(self.Library, "Must set ThemeManager.Library first!")
-        self:CreateThemeManager(groupbox)
+        self:CreateOptions(groupbox)
     end
 
     ThemeManager:BuildFolderTree()
