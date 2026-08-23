@@ -1,4 +1,4 @@
-local repo = "https://raw.githubusercontent.com/uhfork/Obsidian/main/"
+local repo = "http://127.0.0.1:3000/Obsidian/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
@@ -45,6 +45,7 @@ local Window = Library:CreateWindow({
 
 local Tabs = {
 	Main = Window:AddTab("Main", "user"),
+	Changelog = Window:AddTab("Changelog", "file-text", "Obsidian changelog", true), -- Fullsize tab
 	Key = Window:AddKeyTab("Key System"),
 	["UI Settings"] = Window:AddTab("UI Settings", "settings"),
 }
@@ -333,12 +334,6 @@ local Dropdown = DropdownGroupBox:AddDropdown("MyDropdownWithButton", {
 				end,
 			},
 		},
-		{
-			Text = "Button",
-			Func = function()
-				print("I'm a button inside a dropdown!")
-			end,
-		},
 	},
 	Multi = false,
 	Text = "A dropdown with buttons",
@@ -352,9 +347,13 @@ local Dropdown = DropdownGroupBox:AddDropdown("MyDropdownWithButton", {
 	Visible = true,
 })
 
-Dropdown:AddButton("Button 2", function()
-	print("I'm Button 2!")
-end)
+Dropdown:AddButton({
+	Text = "Button",
+	DoubleClick = true,
+	Func = function()
+		print("I'm a button inside a dropdown!")
+	end,
+})
 
 DropdownGroupBox:AddDropdown("MyDisabledDropdown", {
 	Values = { "This", "is", "a", "dropdown" },
@@ -515,15 +514,36 @@ LeftGroupBox2:AddLabel(
 )
 
 local TabBox = Tabs.Main:AddRightTabbox()
-local Tab1 = TabBox:AddTab("Tab 1")
+local Tab1 = TabBox:AddTab("Tab 1", "angry", true) -- This tab will be icon only
 Tab1:AddToggle("Tab1Toggle", { Text = "Tab1 Toggle" })
 
-local Tab2 = TabBox:AddTab("Tab 2")
+local Tab2 = TabBox:AddTab("Tab 2", "lamp", true, false) -- This will not show the Tooltip when IconOnly is enabled
 Tab2:AddToggle("Tab2Toggle", { Text = "Tab2 Toggle" })
+
+local Tab3 = TabBox:AddTab("Tab 3", "apple")
+Tab3:AddToggle("Tab3Toggle", { Text = "Tab3 Toggle" })
+
+local Tab4 = TabBox:AddTab("Tab 4")
+Tab4:AddToggle("Tab4Toggle", { Text = "Tab4 Toggle" })
 
 Library:OnUnload(function()
 	print("Unloaded!")
 end)
+
+local Changelog1 = Tabs.Changelog:AddGroupbox({
+	Side = "Full",
+	Name = "Changelog 1",
+	Description = "23/8/2026",
+})
+
+Changelog1:AddLabel([[[features]
++ Fullsize Tabs
++ IconOnly, ShowTooltip to Tabbox:AddTab(...)
++ Groupbox Descriptions, Groupbox:SetDescription()
+
+[changes]
++ :AddLeftGroupbox(...) and :AddRightGroupbox(...) are now deprecated; use :AddGroupbox({ ... }) instead
++ :AddLeftTabbox(...) and :AddRightTabbox(...) are now deprecated; use :AddTabbox({ ... }) instead]], true)
 
 Tabs.Key:AddLabel({
 	Text = "Key: Banana",
@@ -567,7 +587,7 @@ MenuGroup:AddToggle("ShowCustomCursor", {
 
 MenuGroup:AddToggle("AlwaysOnTop", {
 	Text = "Always On Top",
-	Default = Window.AlwaysOnTop,
+	Default = Library.Window.AlwaysOnTop,
 	Callback = function(Value)
 		Window:SetAlwaysOnTop(Value)
 	end,
@@ -628,6 +648,6 @@ SaveManager:SetFolder("MyScriptHub/specific-game")
 SaveManager:SetSubFolder("specific-place")
 
 SaveManager:BuildConfigSection(Tabs["UI Settings"])
-ThemeManager:ApplyToTab(Tabs["UI Settings"])
+ThemeManager:AddThemeOptions(Tabs["UI Settings"]) -- ThemeManager:ApplyToTab(Tabs["UI Settings"])
 
 SaveManager:LoadAutoloadConfig()

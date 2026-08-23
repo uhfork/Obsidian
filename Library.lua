@@ -426,7 +426,7 @@ local Templates = {
     },
     Dialog = {
         Title = "Dialog",
-        Description = "No description provided.",
+        Description = "No description provided",
         AutoDismiss = true,
         OutsideClickDismiss = true,
         FooterButtons = {}
@@ -591,6 +591,7 @@ local Sizes = {
     Right = { 0.5, 1 },
 }
 local SideIndex = {
+    full = 1,
     left = 1,
     right = 2,
 }
@@ -6684,7 +6685,7 @@ do
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
             LayoutOrder = -1,
-            Size = UDim2.new(1, -2, 0, 0),
+            Size = UDim2.new(1, 0, 0, 0),
             Visible = false,
             ZIndex = MenuTable.Menu.ZIndex + 1,
             Parent = MenuTable.Menu,
@@ -6713,9 +6714,7 @@ do
         local FilteredEntries = {}
 
         local function GetButtonOffset()
-            if not ButtonContainer.Visible then
-                return 0
-            end
+            if not ButtonContainer.Visible then return 0 end
             return ButtonContainer.AbsoluteSize.Y / Library.DPIScale
         end
 
@@ -6724,6 +6723,9 @@ do
             local ButtonOffset = GetButtonOffset()
             local ListY = math.clamp(ItemCount * ItemHeight, 0, Info.MaxVisibleDropdownItems * ItemHeight)
             local TotalY = ListY + ButtonOffset
+
+            local ScrollVisible = ItemCount > Info.MaxVisibleDropdownItems
+            ButtonContainer.Size = UDim2.new(1, ScrollVisible and -2 or 0, 0, 0)
 
             MenuTable.Menu.CanvasSize = UDim2.fromOffset(0, ItemCount * ItemHeight + ButtonOffset)
 
@@ -6959,9 +6961,6 @@ do
                     Info.Func = Params.Func or Params.Callback or function() end
                     Info.DoubleClick = Params.DoubleClick
 
-                    Info.Tooltip = Params.Tooltip
-                    Info.DisabledTooltip = Params.DisabledTooltip
-
                     Info.Risky = Params.Risky or false
                     Info.Disabled = Params.Disabled or false
                     Info.Visible = Params.Visible or true
@@ -6970,9 +6969,6 @@ do
                     Info.Text = First or ""
                     Info.Func = Second or function() end
                     Info.DoubleClick = false
-
-                    Info.Tooltip = nil
-                    Info.DisabledTooltip = nil
 
                     Info.Risky = false
                     Info.Disabled = false
@@ -6991,17 +6987,8 @@ do
                 Destroyed = false,
 
                 Text = Info.Text,
-                Func = function()
-                    Library:SafeCallback(Info.Func)
-                    Dropdown:Display()
-
-                    Dropdown:RunChanged()
-                end,
+                Func = Info.Func,
                 DoubleClick = Info.DoubleClick,
-
-                Tooltip = Info.Tooltip,
-                DisabledTooltip = Info.DisabledTooltip,
-                TooltipTable = nil,
 
                 Risky = Info.Risky,
                 Disabled = Info.Disabled,
@@ -7115,10 +7102,6 @@ do
                     Func = Info.Func,
                     DoubleClick = Info.DoubleClick,
 
-                    Tooltip = Info.Tooltip,
-                    DisabledTooltip = Info.DisabledTooltip,
-                    TooltipTable = nil,
-
                     Risky = Info.Risky,
                     Disabled = Info.Disabled,
                     Visible = Info.Visible,
@@ -7149,10 +7132,6 @@ do
                 function SubButton:SetDisabled(Disabled: boolean)
                     SubButton.Disabled = Disabled
 
-                    if SubButton.TooltipTable then
-                        SubButton.TooltipTable.Disabled = SubButton.Disabled
-                    end
-
                     SubButton.Base.Active = not SubButton.Disabled
                     SubButton:UpdateColors()
                 end
@@ -7166,11 +7145,6 @@ do
                 function SubButton:SetText(Text: string)
                     SubButton.Text = Text
                     SubButton.Base.Text = Text
-                end
-
-                if typeof(SubButton.Tooltip) == "string" or typeof(SubButton.DisabledTooltip) == "string" then
-                    SubButton.TooltipTable = Library:AddTooltip(SubButton.Tooltip, SubButton.DisabledTooltip, SubButton.Base)
-                    SubButton.TooltipTable.Disabled = SubButton.Disabled
                 end
 
                 if SubButton.Risky then
@@ -7188,10 +7162,6 @@ do
 
                 function SubButton:Destroy()
                     SubButton.Destroyed = true
-
-                    if SubButton.TooltipTable then
-                        SubButton.TooltipTable:Destroy()
-                    end
 
                     if SubButton.Tween then
                         SubButton.Tween:Destroy()
@@ -7232,10 +7202,6 @@ do
             function Button:SetDisabled(Disabled: boolean)
                 Button.Disabled = Disabled
 
-                if Button.TooltipTable then
-                    Button.TooltipTable.Disabled = Button.Disabled
-                end
-
                 Button.Base.Active = not Button.Disabled
                 Button:UpdateColors()
             end
@@ -7249,11 +7215,6 @@ do
             function Button:SetText(Text: string)
                 Button.Text = Text
                 Button.Base.Text = Text
-            end
-
-            if typeof(Button.Tooltip) == "string" or typeof(Button.DisabledTooltip) == "string" then
-                Button.TooltipTable = Library:AddTooltip(Button.Tooltip, Button.DisabledTooltip, Button.Base)
-                Button.TooltipTable.Disabled = Button.Disabled
             end
 
             if Button.Risky then
@@ -7274,10 +7235,6 @@ do
             function Button:Destroy()
                 Button.Destroyed = true
 
-                if Button.TooltipTable then
-                    Button.TooltipTable:Destroy()
-                end
-
                 if Button.Tween then
                     Button.Tween:Destroy()
                 end
@@ -7290,12 +7247,12 @@ do
                     Holder:Destroy()
                 end
 
-                local ElemIdx = table.find(Groupbox.Elements, Button)
+                local ElemIdx = table.find(ExtraButtons, Button)
                 if ElemIdx then
-                    table.remove(Groupbox.Elements, ElemIdx)
+                    table.remove(ExtraButtons, ElemIdx)
                 end
 
-                Groupbox:Resize()
+                Dropdown:RecalculateListSize()
 
                 if Info.Idx then
                     ExtraButtons[Info.Idx] = nil
@@ -10065,7 +10022,7 @@ function Library:CreateWindow(WindowInfo)
 
     function Window:ShowTabInfo(Name, Description)
         CurrentTabLabel.Text = `<b>{Name or "Name"}</b>`
-        CurrentTabDescription.Text = Description or "No information provided."
+        CurrentTabDescription.Text = Description or "Description"
 
         if IsDefaultSearchbarSize then
             SearchBox.Size = UDim2.fromScale(0.35, 1)
@@ -10084,19 +10041,22 @@ function Library:CreateWindow(WindowInfo)
         local Name = nil
         local Icon = nil
         local Description = nil
+        local Fullsize = false
         local Order = nil
 
         if select("#", ...) == 1 and typeof(...) == "table" then
             local Info = select(1, ...)
             Name = Info.Name or "Tab"
             Icon = Info.Icon
-            Description = Info.Description or "No information provided."
+            Description = Info.Description or "No information provided"
+            Fullsize = Info.Fullsize
             Order = Info.Order
         else
             Name = select(1, ...) or "Tab"
             Icon = select(2, ...)
-            Description = select(3, ...) or "No information provided."
-            Order = select(4, ...)
+            Description = select(3, ...) or "No information provided"
+            Fullsize = select(4, ...)
+            Order = select(5, ...)
         end
 
         Icon = Icon or "file-question-mark"
@@ -10108,8 +10068,7 @@ function Library:CreateWindow(WindowInfo)
 
         local TabContainer
         local TabCanvas
-        local TabLeft
-        local TabRight
+        local TabLeft, TabRight
 
         Icon = if Icon == "file-question-mark" then FileQuestionMarkIcon else Library:GetCustomIcon(Icon)
         do
@@ -10197,72 +10156,107 @@ function Library:CreateWindow(WindowInfo)
                 Parent = TabCanvas,
             })
 
-            TabLeft = New("ScrollingFrame", {
-                AutomaticCanvasSize = Enum.AutomaticSize.Y,
-                BackgroundTransparency = 1,
-                CanvasSize = UDim2.fromScale(0, 0),
-                ScrollBarImageTransparency = 1,
-                ScrollBarThickness = 0,
-                Size = UDim2.new(0.5, -3, 1, 0),
-                Parent = TabContainer,
-            })
-            New("UIListLayout", {
-                Padding = UDim.new(0, 2),
-                Parent = TabLeft,
-            })
-            New("UIPadding", {
-                PaddingBottom = UDim.new(0, 2),
-                PaddingLeft = UDim.new(0, 2),
-                PaddingRight = UDim.new(0, 2),
-                PaddingTop = UDim.new(0, 2),
-                Parent = TabLeft,
-            })
-            do
-                New("Frame", {
+            if Fullsize then
+                TabLeft = New("ScrollingFrame", {
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
                     BackgroundTransparency = 1,
-                    LayoutOrder = -1,
+                    CanvasSize = UDim2.fromScale(0, 0),
+                    ScrollBarImageTransparency = 1,
+                    ScrollBarThickness = 0,
+                    Size = UDim2.fromScale(1, 1),
+                    Parent = TabContainer,
+                })
+                New("UIListLayout", {
+                    Padding = UDim.new(0, 2),
                     Parent = TabLeft,
                 })
-                New("Frame", {
-                    BackgroundTransparency = 1,
-                    LayoutOrder = 1,
+                New("UIPadding", {
+                    PaddingBottom = UDim.new(0, 2),
+                    PaddingLeft = UDim.new(0, 2),
+                    PaddingRight = UDim.new(0, 2),
+                    PaddingTop = UDim.new(0, 2),
                     Parent = TabLeft,
                 })
-            end
+                do
+                    New("Frame", {
+                        BackgroundTransparency = 1,
+                        LayoutOrder = -1,
+                        Parent = TabLeft,
+                    })
+                    New("Frame", {
+                        BackgroundTransparency = 1,
+                        LayoutOrder = 1,
+                        Parent = TabLeft,
+                    })
+                end
+            else
+                TabLeft = New("ScrollingFrame", {
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
+                    BackgroundTransparency = 1,
+                    CanvasSize = UDim2.fromScale(0, 0),
+                    ScrollBarImageTransparency = 1,
+                    ScrollBarThickness = 0,
+                    Size = UDim2.new(0.5, -3, 1, 0),
+                    Parent = TabContainer,
+                })
+                New("UIListLayout", {
+                    Padding = UDim.new(0, 2),
+                    Parent = TabLeft,
+                })
+                New("UIPadding", {
+                    PaddingBottom = UDim.new(0, 2),
+                    PaddingLeft = UDim.new(0, 2),
+                    PaddingRight = UDim.new(0, 2),
+                    PaddingTop = UDim.new(0, 2),
+                    Parent = TabLeft,
+                })
+                do
+                    New("Frame", {
+                        BackgroundTransparency = 1,
+                        LayoutOrder = -1,
+                        Parent = TabLeft,
+                    })
+                    New("Frame", {
+                        BackgroundTransparency = 1,
+                        LayoutOrder = 1,
+                        Parent = TabLeft,
+                    })
+                end
 
-            TabRight = New("ScrollingFrame", {
-                AnchorPoint = Vector2.new(1, 0),
-                AutomaticCanvasSize = Enum.AutomaticSize.Y,
-                BackgroundTransparency = 1,
-                CanvasSize = UDim2.fromScale(0, 0),
-                Position = UDim2.fromScale(1, 0),
-                ScrollBarImageTransparency = 1,
-                ScrollBarThickness = 0,
-                Size = UDim2.new(0.5, -3, 1, 0),
-                Parent = TabContainer,
-            })
-            New("UIListLayout", {
-                Padding = UDim.new(0, 2),
-                Parent = TabRight,
-            })
-            New("UIPadding", {
-                PaddingBottom = UDim.new(0, 2),
-                PaddingLeft = UDim.new(0, 2),
-                PaddingRight = UDim.new(0, 2),
-                PaddingTop = UDim.new(0, 2),
-                Parent = TabRight,
-            })
-            do
-                New("Frame", {
+                TabRight = New("ScrollingFrame", {
+                    AnchorPoint = Vector2.new(1, 0),
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y,
                     BackgroundTransparency = 1,
-                    LayoutOrder = -1,
+                    CanvasSize = UDim2.fromScale(0, 0),
+                    Position = UDim2.fromScale(1, 0),
+                    ScrollBarImageTransparency = 1,
+                    ScrollBarThickness = 0,
+                    Size = UDim2.new(0.5, -3, 1, 0),
+                    Parent = TabContainer,
+                })
+                New("UIListLayout", {
+                    Padding = UDim.new(0, 2),
                     Parent = TabRight,
                 })
-                New("Frame", {
-                    BackgroundTransparency = 1,
-                    LayoutOrder = 1,
+                New("UIPadding", {
+                    PaddingBottom = UDim.new(0, 2),
+                    PaddingLeft = UDim.new(0, 2),
+                    PaddingRight = UDim.new(0, 2),
+                    PaddingTop = UDim.new(0, 2),
                     Parent = TabRight,
                 })
+                do
+                    New("Frame", {
+                        BackgroundTransparency = 1,
+                        LayoutOrder = -1,
+                        Parent = TabRight,
+                    })
+                    New("Frame", {
+                        BackgroundTransparency = 1,
+                        LayoutOrder = 1,
+                        Parent = TabRight,
+                    })
+                end
             end
         end
 
@@ -10356,6 +10350,7 @@ function Library:CreateWindow(WindowInfo)
         --// Tab Table \\--
         local Tab = {
             Description = Description,
+            Fullsize = Fullsize,
 
             Connections = {},
             Destroyed = false,
@@ -10453,9 +10448,16 @@ function Library:CreateWindow(WindowInfo)
 
         function Tab:RefreshSides()
             local Offset = WarningBoxHolder.Visible and WarningBox.Size.Y.Offset + 8 or 0
-            for _, Side in Tab.Sides do
-                Side.Position = UDim2.new(Side.Position.X.Scale, 0, 0, Offset)
-                Side.Size = UDim2.new(0.5, -3, 1, -Offset)
+
+            if Tab.Fullsize then
+                local Side = Tab.Sides[1]
+                Side.Position = UDim2.new(0, 0, 0, Offset)
+                Side.Size = UDim2.new(1, 0, 1, -Offset)
+            else
+                for _, Side in Tab.Sides do
+                    Side.Position = UDim2.new(Side.Position.X.Scale, 0, 0, Offset)
+                    Side.Size = UDim2.new(0.5, -3, 1, -Offset)
+                end
             end
         end
 
@@ -10490,7 +10492,7 @@ function Library:CreateWindow(WindowInfo)
             if typeof(Info.Side) == "string" then
                 local lowerSide = string.lower(Info.Side)
                 if not SideIndex[lowerSide] then
-                    error("Invalid side:", Info.Side)
+                    error("Invalid side: " .. Info.Side)
                 end
 
                 Info.Side = SideIndex[lowerSide]
@@ -10573,7 +10575,7 @@ function Library:CreateWindow(WindowInfo)
                 end
             end
 
-            function Tabbox:AddTab(Name, IconName)
+            function Tabbox:AddTab(Name, IconName, IconOnly, ShowTooltip)
                 TotalTabs = TotalTabs + 1
                 local TabIndex = TotalTabs
 
@@ -10613,11 +10615,11 @@ function Library:CreateWindow(WindowInfo)
                     FillDirection = Enum.FillDirection.Horizontal,
                     HorizontalAlignment = Enum.HorizontalAlignment.Center,
                     VerticalAlignment = Enum.VerticalAlignment.Center,
-                    Padding = UDim.new(0, 8),
+                    Padding = UDim.new(0, 4),
                     Parent = ButtonContent,
                 })
 
-                local ButtonIcon                
+                local ButtonIcon
                 local BoxIcon = Library:GetCustomIcon(IconName)
                 if BoxIcon then
                     ButtonIcon = New("ImageLabel", {
@@ -10626,13 +10628,13 @@ function Library:CreateWindow(WindowInfo)
                         ImageRectOffset = BoxIcon.ImageRectOffset,
                         ImageRectSize = BoxIcon.ImageRectSize,
                         ImageTransparency = 0.5,
-                        Size = IsNameEmpty and UDim2.fromOffset(20, 20) or UDim2.fromOffset(18, 18),
+                        Size = (IsNameEmpty or IconOnly) and UDim2.fromOffset(20, 20) or UDim2.fromOffset(18, 18),
                         Parent = ButtonContent,
                     })
                 end
 
                 local ButtonLabel
-                if not IsNameEmpty then
+                if not (IsNameEmpty or IconOnly) then
                     ButtonLabel = New("TextLabel", {
                         AutomaticSize = Enum.AutomaticSize.X,
                         BackgroundTransparency = 1,
@@ -10772,6 +10774,11 @@ function Library:CreateWindow(WindowInfo)
                     Tab:Show()
                 end
 
+                Button.MouseEnter:Connect(function()
+                    if IconOnly and ShowTooltip ~= false then
+                        Library:AddTooltip(Name, Name, Button)
+                    end
+                end)
                 Button.MouseButton1Click:Connect(Tab.Show)
 
                 setmetatable(Tab, BaseGroupbox)
@@ -10817,10 +10824,12 @@ function Library:CreateWindow(WindowInfo)
 
         Tab.AddTabbox = AddTabbox
 
+        --// Deprecated - Use Tab:AddTabbox instead
         function Tab:AddLeftTabbox(Name)
             return Tab:AddTabbox({ Side = 1, Name = Name })
         end
 
+        --// Deprecated - Use Tab:AddTabbox instead.
         function Tab:AddRightTabbox(Name)
             return Tab:AddTabbox({ Side = 2, Name = Name })
         end
@@ -12486,10 +12495,6 @@ function Library:CreateLoading(LoadingInfo)
         Visible = Loading.ShowSidebar,
         Parent = MainFrame,
     })
-    local SidebarCorner = New("UICorner", { CornerRadius = UDim.new(0, Library.CornerRadius), Parent = SideBar })
-    table.insert(Library.Corners, SidebarCorner)
-    
-    Library:AddOutline(SideBar)
     
     local SidebarDivider = New("Frame", {
         BackgroundColor3 = "OutlineColor",
