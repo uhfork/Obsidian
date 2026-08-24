@@ -1,4 +1,4 @@
-local repo = "http://127.0.0.1:3000/Obsidian/"
+local repo = "https://raw.githubusercontent.com/Obsidian/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
