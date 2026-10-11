@@ -9040,7 +9040,7 @@ function Library:SetNotifySide(Side: string)
     end
 end
 
-Library.Notify = function(...)
+function Library:Notify(...)
     local Data = {}
     local Info = select(1, ...)
 
