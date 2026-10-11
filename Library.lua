@@ -4269,7 +4269,7 @@ do
             Parent = InfoHolder,
         })
 
-        local HueBoxStroke = New("UIStroke", {
+        New("UIStroke", {
             Color = "OutlineColor",
             Parent = HueBox,
         })
@@ -4283,7 +4283,7 @@ do
             Parent = InfoHolder,
         })
 
-        local RgbBoxStroke = New("UIStroke", {
+        New("UIStroke", {
             Color = "OutlineColor",
             Parent = RgbBox,
         })
@@ -4609,27 +4609,6 @@ do
 
             ColorPicker:Update()
         end))
-
-        for _, BoxPair in { 
-            { HueBox, HueBoxStroke }, 
-            { RgbBox, RgbBoxStroke } 
-        } do
-            local TextBoxInstance, Stroke = BoxPair[1], BoxPair[2]
-
-            table.insert(ColorPicker.Connections, TextBoxInstance.Focused:Connect(function()
-                Library.Registry[Stroke].Color = "AccentColor"
-                TweenService:Create(Stroke, Library.TweenInfo, {
-                    Color = Library.Scheme.AccentColor,
-                }):Play()
-            end))
-
-            table.insert(ColorPicker.Connections, TextBoxInstance.FocusLost:Connect(function()
-                Library.Registry[Stroke].Color = "OutlineColor"
-                TweenService:Create(Stroke, Library.TweenInfo, {
-                    Color = Library.Scheme.OutlineColor,
-                }):Play()
-            end))
-        end
 
         ColorPicker:Display()
 
@@ -5948,7 +5927,7 @@ do
             Parent = Box,
         })
 
-        local BoxStroke = New("UIStroke", {
+        New("UIStroke", {
             Color = "OutlineColor",
             Parent = Box,
         })
@@ -6041,24 +6020,6 @@ do
                 Input:SetValue(Box.Text)
             end))
         end
-
-        table.insert(Input.Connections, Box.Focused:Connect(function()
-            if Input.Disabled then
-                return
-            end
-
-            Library.Registry[BoxStroke].Color = "AccentColor"
-            TweenService:Create(BoxStroke, Library.TweenInfo, {
-                Color = Library.Scheme.AccentColor,
-            }):Play()
-        end))
-
-        table.insert(Input.Connections, Box.FocusLost:Connect(function()
-            Library.Registry[BoxStroke].Color = "OutlineColor"
-            TweenService:Create(BoxStroke, Library.TweenInfo, {
-                Color = Library.Scheme.OutlineColor,
-            }):Play()
-        end))
 
         if typeof(Input.Tooltip) == "string" or typeof(Input.DisabledTooltip) == "string" then
             Input.TooltipTable = Library:AddTooltip(Input.Tooltip, Input.DisabledTooltip, Box)
