@@ -1664,10 +1664,26 @@ function Library:MakeDraggable(UI: GuiObject, DragFrame: GuiObject, IgnoreToggle
     local Dragging = false
     local Changed
     local InputBegan
-    local InputChanged
+    local ActiveInputConnection
+
+    local function CleanupActiveDrag()
+        Dragging = false
+        if Changed and Changed.Connected then
+            Changed:Disconnect()
+            Changed = nil
+        end
+        if ActiveInputConnection and ActiveInputConnection.Connected then
+            ActiveInputConnection:Disconnect()
+            ActiveInputConnection = nil
+        end
+    end
 
     InputBegan = DragFrame.InputBegan:Connect(function(Input: InputObject)
-        if not IsClickInput(Input) or IsMainWindow and Library.CantDragForced then
+        if not IsClickInput(Input) or IsMainWindow and Library.CantDragForced or Dragging then
+            return
+        end
+
+        if (not IgnoreToggled and not Library.Toggled) or not (ScreenGui and ScreenGui.Parent) then
             return
         end
 
@@ -1676,59 +1692,36 @@ function Library:MakeDraggable(UI: GuiObject, DragFrame: GuiObject, IgnoreToggle
         Dragging = true
 
         Changed = Input.Changed:Connect(function()
-            if Input.UserInputState ~= Enum.UserInputState.End then
+            if Input.UserInputState == Enum.UserInputState.End then
+                CleanupActiveDrag()
+            end
+        end)
+
+        ActiveInputConnection = Input.Changed:Connect(function()
+            if not Dragging then return end
+
+            if (not IgnoreToggled and not Library.Toggled) or (IsMainWindow and Library.CantDragForced) or not (ScreenGui and ScreenGui.Parent) then
+                CleanupActiveDrag()
                 return
             end
 
-            Dragging = false
-            if Changed and Changed.Connected then
-                Changed:Disconnect()
-                Changed = nil
-            end
+            local Delta = Input.Position - StartPos
+            UI.Position = UDim2.new(
+                FramePos.X.Scale, 
+                FramePos.X.Offset + Delta.X, 
+                FramePos.Y.Scale, 
+                FramePos.Y.Offset + Delta.Y
+            )
         end)
     end)
 
-    InputChanged = UserInputService.InputChanged:Connect(function(Input: InputObject)
-        if
-            (not IgnoreToggled and not Library.Toggled)
-            or (IsMainWindow and Library.CantDragForced)
-            or not (ScreenGui and ScreenGui.Parent)
-        then
-            Dragging = false
-            if Changed and Changed.Connected then
-                Changed:Disconnect()
-                Changed = nil
-            end
-
-            return
-        end
-
-        if Dragging and IsHoverInput(Input) then
-            local Delta = Input.Position - StartPos
-            UI.Position =
-                UDim2.new(FramePos.X.Scale, FramePos.X.Offset + Delta.X, FramePos.Y.Scale, FramePos.Y.Offset + Delta.Y)
-        end
-    end)
-
-    Library:GiveSignal(InputChanged)
     Library:GiveSignal(InputBegan)
     
     UI.Destroying:Once(function()
-        if InputChanged and InputChanged.Connected then
-            InputChanged:Disconnect()
-        end
+        CleanupActiveDrag()
 
         if InputBegan and InputBegan.Connected then
             InputBegan:Disconnect()
-        end
-
-        if Changed and Changed.Connected then
-            Changed:Disconnect()
-        end
-
-        local IdxChanged = table.find(Library.Signals, InputChanged)
-        if IdxChanged then
-            table.remove(Library.Signals, IdxChanged)
         end
 
         local IdxBegan = table.find(Library.Signals, InputBegan)
@@ -1744,10 +1737,22 @@ function Library:MakeResizable(UI: GuiObject, DragFrame: GuiObject, Callback: ()
     local Dragging = false
     local Changed
     local InputBegan
-    local InputChanged
+    local ActiveInputConnection
+
+    local function CleanupActiveResize()
+        Dragging = false
+        if Changed and Changed.Connected then
+            Changed:Disconnect()
+            Changed = nil
+        end
+        if ActiveInputConnection and ActiveInputConnection.Connected then
+            ActiveInputConnection:Disconnect()
+            ActiveInputConnection = nil
+        end
+    end
 
     InputBegan = DragFrame.InputBegan:Connect(function(Input: InputObject)
-        if not IsClickInput(Input) then
+        if not IsClickInput(Input) or Dragging then
             return
         end
 
@@ -1756,30 +1761,19 @@ function Library:MakeResizable(UI: GuiObject, DragFrame: GuiObject, Callback: ()
         Dragging = true
 
         Changed = Input.Changed:Connect(function()
-            if Input.UserInputState ~= Enum.UserInputState.End then
+            if Input.UserInputState == Enum.UserInputState.End then
+                CleanupActiveResize()
+            end
+        end)
+
+        ActiveInputConnection = Input.Changed:Connect(function()
+            if not Dragging then return end
+
+            if not UI.Visible or not (ScreenGui and ScreenGui.Parent) then
+                CleanupActiveResize()
                 return
             end
 
-            Dragging = false
-            if Changed and Changed.Connected then
-                Changed:Disconnect()
-                Changed = nil
-            end
-        end)
-    end)
-
-    InputChanged = UserInputService.InputChanged:Connect(function(Input: InputObject)
-        if not UI.Visible or not (ScreenGui and ScreenGui.Parent) then
-            Dragging = false
-            if Changed and Changed.Connected then
-                Changed:Disconnect()
-                Changed = nil
-            end
-
-            return
-        end
-
-        if Dragging and IsHoverInput(Input) then
             local Delta = Input.Position - StartPos
             UI.Size = UDim2.new(
                 FrameSize.X.Scale,
@@ -1790,28 +1784,16 @@ function Library:MakeResizable(UI: GuiObject, DragFrame: GuiObject, Callback: ()
             if Callback then
                 Library:SafeCallback(Callback)
             end
-        end
+        end)
     end)
 
-    Library:GiveSignal(InputChanged)
     Library:GiveSignal(InputBegan)
 
     UI.Destroying:Once(function()
-        if InputChanged and InputChanged.Connected then
-            InputChanged:Disconnect()
-        end
+        CleanupActiveResize()
 
         if InputBegan and InputBegan.Connected then
             InputBegan:Disconnect()
-        end
-
-        if Changed and Changed.Connected then
-            Changed:Disconnect()
-        end
-
-        local IdxChanged = table.find(Library.Signals, InputChanged)
-        if IdxChanged then
-            table.remove(Library.Signals, IdxChanged)
         end
 
         local IdxBegan = table.find(Library.Signals, InputBegan)
